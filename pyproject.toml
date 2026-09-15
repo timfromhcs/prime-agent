@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prime-agent"
+version = "3.0.0"
+description = "Prime Agent V3 — local-first autonomous agent workbench (RLM, subagents, RAG, MCP, vision, images)"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Apache-2.0" }
+authors = [{ name = "timfromhcs" }]
+keywords = ["agent", "rlm", "llm", "rag", "mcp", "llama.cpp"]
+dependencies = [
+  "dill",
+  "psutil",
+  "pydantic",
+  "fastapi",
+  "uvicorn",
+  "rich",
+  "click",
+  "httpx",
+  "aiofiles",
+  "pytest",
+  "pytest-asyncio",
+  "pillow",
+  "pypdf",
+  "python-docx",
+  "beautifulsoup4",
+  "markdown",
+  "numpy",
+  "rank-bm25",
+  "mcp",
+  "huggingface_hub",
+  "torch",
+  "torchvision",
+  "transformers",
+  "sentence-transformers",
+  "diffusers",
+  "accelerate",
+]
+
+[project.scripts]
+prime-agent = "cli:cli"
+
+[tool.setuptools]
+py-modules = ["cli"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["services*", "rlm*", "tui*"]
