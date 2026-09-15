@@ -1,7 +1,7 @@
 {
   "timestamp": "Tue Sep 15 2026 (V3 workbench)",
   "all_criteria_verified": true,
-  "criteria_count": 62,
+  "criteria_count": 63,
   "results": {
     "RLM": {
       "status": "VERIFIED",
@@ -250,6 +250,10 @@
     "TESTS_45": {
       "status": "VERIFIED",
       "evidence": "45 passed"
+    },
+    "RAG_INDEX_CLEAN": {
+      "status": "VERIFIED",
+      "evidence": "rebuilt from 17 real docs (175 chunks, 0 pytest-tmp pollution); test_rag_quality isolated to tmp index; suite leaves index clean"
     }
   }
 }

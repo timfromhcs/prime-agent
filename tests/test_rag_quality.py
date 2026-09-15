@@ -90,6 +90,9 @@ async def test_rag_programmatic_rlm_capability(tmp_path):
     # Test that await rag.search(...) executes inside REPL and returns structured evidence
     agent = PrimeAgent()
     try:
+        # Isolated index: never pollute the production data/indexes/rag_index.json
+        from services.rag.index import HybridRAGIndex
+        agent.rag_index = HybridRAGIndex(index_file=str(tmp_path / "q_rag.json"))
         # Ingest a test document into RAG
         test_doc = tmp_path / "rlm_spec.md"
         test_doc.write_text("# RLM Kernel Specification\nThe RLM kernel provides durable state and top-level await.", encoding="utf-8")
