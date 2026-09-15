@@ -352,11 +352,20 @@ def optimize():
         "profile": "OPTIMAL_VULKAN_SPECULATIVE" if has_vulkan else "BALANCED_CPU",
         "backend": "vulkan" if has_vulkan else "cpu",
         "gpu_layers": 99 if has_vulkan else 0,
+        "gpu_layers_draft": 99 if has_vulkan else 0,
         "threads": min(8, psutil.cpu_count(logical=True) or 8),
+        "threads_draft": 4,
         "context_size": 4096 if mem.available > 4 * 1024**3 else 2048,
+        "flash_attn": "on" if has_vulkan else "auto",
+        "cache_type_k": "q8_0",
+        "cache_type_v": "q8_0",
+        "cache_type_k_draft": "q8_0",
+        "cache_type_v_draft": "q8_0",
+        "ubatch_size": 512,
+        "speculative_enabled": True,
         "speculative_draft": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
         "spec_draft_n_max": 8,
-        "kv_cache_type": "f16",
+        "spec_draft_n_min": 2,
         "applied_at": time.ctime()
     }
 

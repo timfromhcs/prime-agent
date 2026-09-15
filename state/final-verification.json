@@ -1,7 +1,7 @@
 {
   "timestamp": "Tue Sep 15 2026 (V3 workbench)",
   "all_criteria_verified": true,
-  "criteria_count": 33,
+  "criteria_count": 37,
   "results": {
     "RLM": {
       "status": "VERIFIED",
@@ -134,6 +134,22 @@
     "TESTS_HCSCODER": {
       "status": "VERIFIED",
       "evidence": "30 passed (24 pre-existing + 6 test_hcscoder)"
+    },
+    "LLAMA_TUNED": {
+      "status": "VERIFIED",
+      "evidence": "server.json: FA on, KV q8_0 main+draft, n-max 8/n-min 2, ngl/ngld 99; flags confirmed on exec line + unit-tested in test_llama_tuning"
+    },
+    "LLM_LIVE": {
+      "status": "VERIFIED",
+      "evidence": "scripts/live_check.py exit 0: server 3.2s, LLAMA_OK, 29 stream deltas, BUILD RESULT:157, verification FACT"
+    },
+    "SPEC_AB": {
+      "status": "VERIFIED",
+      "evidence": "A/B same prompt: spec decode 24.0 vs nospec 22.6 tok/s (short output, single run); draft load in server log; no acceptance counter in build 10977 API"
+    },
+    "TESTS_TUNED": {
+      "status": "VERIFIED",
+      "evidence": "33 passed (30 + 3 test_llama_tuning)"
     }
   }
 }

@@ -61,6 +61,25 @@ class ModelManager:
             with open(hw_file, "r", encoding="utf-8") as f:
                 self.hw_cfg = json.load(f)
 
+        # Optimal profile (written by `hcscoder optimize`) overrides server.json.
+        prof_file = self.config_dir / "optimal-profile.json"
+        self.active_profile = "server.json (default tuned profile)"
+        if prof_file.exists():
+            try:
+                with open(prof_file, "r", encoding="utf-8") as f:
+                    prof = json.load(f)
+                for k in ("backend", "threads", "threads_draft", "context_size",
+                          "gpu_layers", "gpu_layers_draft", "flash_attn",
+                          "cache_type_k", "cache_type_v",
+                          "cache_type_k_draft", "cache_type_v_draft",
+                          "ubatch_size", "speculative_enabled",
+                          "spec_draft_n_max", "spec_draft_n_min"):
+                    if k in prof:
+                        self.server_cfg[k] = prof[k]
+                self.active_profile = f"optimal-profile.json ({prof.get('profile', '?')})"
+            except Exception as e:
+                print(f"[ModelManager] ignoring broken optimal-profile.json: {e}")
+
     def get_binary_path(self, backend: Optional[str] = None) -> str:
         b = backend or self.server_cfg.get("backend", "vulkan")
         vulkan_bin = Path("runtime/llama.cpp/vulkan/llama-server.exe")
@@ -106,6 +125,50 @@ class ModelManager:
         except Exception:
             pass
 
+    def _build_args(self, role: str, port: int, bin_path: str, model_path: str,
+                    backend: str, projector_path=None) -> tuple[list, Optional[str]]:
+        """Pure arg builder (unit-tested) — returns (args, draft_path)."""
+        ctx_size = self.server_cfg.get("context_size", 4096)
+        args = [
+            bin_path,
+            "-m", model_path,
+            "--port", str(port),
+            "--host", "127.0.0.1",
+            "-c", str(ctx_size),
+            "-t", str(self.server_cfg.get("threads", 8)),
+            "-ub", str(self.server_cfg.get("ubatch_size", 512)),
+            "-fa", str(self.server_cfg.get("flash_attn", "auto")),
+            "-ctk", str(self.server_cfg.get("cache_type_k", "f16")),
+            "-ctv", str(self.server_cfg.get("cache_type_v", "f16")),
+            "--no-warmup",
+            "-np", "1",
+            "--reasoning-budget", "0"
+        ]
+
+        if backend == "vulkan":
+            args.extend(["-ngl", str(self.server_cfg.get("gpu_layers", 99))])
+
+        if projector_path and os.path.exists(projector_path):
+            args.extend(["--mmproj", projector_path])
+
+        draft_path = None
+        use_spec = self.server_cfg.get("speculative_enabled", False)
+        if role == "primary" and use_spec:
+            draft_cfg = self.models_cfg.get("draft")
+            if draft_cfg and os.path.exists(draft_cfg["path"]):
+                draft_path = draft_cfg["path"]
+                args.extend([
+                    "-md", draft_path,
+                    "--spec-draft-n-max", str(self.server_cfg.get("spec_draft_n_max", 8)),
+                    "--spec-draft-n-min", str(self.server_cfg.get("spec_draft_n_min", 2)),
+                    "-td", str(self.server_cfg.get("threads_draft", 4)),
+                    "-ctkd", str(self.server_cfg.get("cache_type_k_draft", "q8_0")),
+                    "-ctvd", str(self.server_cfg.get("cache_type_v_draft", "q8_0")),
+                ])
+                if backend == "vulkan":
+                    args.extend(["-ngld", str(self.server_cfg.get("gpu_layers_draft", 99))])
+        return args, draft_path
+
     async def start_server(self, role: str = "primary", port: int = 8080, speculative: Optional[bool] = None) -> int:
         self.free_port(port)
         model_info = self.models_cfg.get(role)
@@ -116,40 +179,17 @@ class ModelManager:
         backend = self.server_cfg.get("backend", "vulkan")
         bin_path = self.get_binary_path(backend)
 
-        ctx_size = self.server_cfg.get("context_size", 4096)
-        args = [
-            bin_path,
-            "-m", model_path,
-            "--port", str(port),
-            "--host", "127.0.0.1",
-            "-c", str(ctx_size),
-            "-t", str(self.server_cfg.get("threads", 8)),
-            "--no-warmup",
-            "-np", "1",
-            "--reasoning-budget", "0"
-        ]
-
-        if backend == "vulkan":
-            args.extend(["-ngl", str(self.server_cfg.get("gpu_layers", 99))])
+        if speculative is not None:
+            self.server_cfg["speculative_enabled"] = speculative
 
         projector_path = model_info.get("projector_path")
-        if projector_path and os.path.exists(projector_path):
-            args.extend(["--mmproj", projector_path])
-
-        # Speculative draft if primary role and enabled
-        draft_path = None
-        use_spec = self.server_cfg.get("speculative_enabled", False) if speculative is None else speculative
-        if role == "primary" and use_spec:
-            draft_cfg = self.models_cfg.get("draft")
-            if draft_cfg and os.path.exists(draft_cfg["path"]):
-                draft_path = draft_cfg["path"]
-                draft_n = self.server_cfg.get("spec_draft_n_max", 8)
-                args.extend(["-md", draft_path, "--spec-draft-n-max", str(draft_n)])
-                if backend == "vulkan":
-                    args.extend(["-ngld", "99"])
+        args, draft_path = self._build_args(role, port, bin_path, model_path, backend, projector_path)
 
         log_file = self.logs_dir / f"llama_server_{role}_{port}.log"
         log_fp = open(log_file, "wb", buffering=0)
+
+        print(f"[ModelManager] profile: {self.active_profile}")
+        print(f"[ModelManager] exec: {' '.join(args[1:])}")
 
         proc = subprocess.Popen(
             args,
