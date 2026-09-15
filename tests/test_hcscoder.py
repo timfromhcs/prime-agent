@@ -73,3 +73,12 @@ def test_permission_sensitive_paths_gated(tmp_path):
     assert eng.decide("read_file", "notes.txt", "s1")["decision"] == "allow"
     assert eng.decide("read_file", ".env", "s1")["decision"] in ("ask", "deny")
     assert eng.decide("shell_exec", "rm -rf /*", "s1")["decision"] == "deny"
+
+
+def test_extract_code_blocks_tolerates_truncation():
+    from services.agent.root_agent import extract_code_blocks
+    full = "text ```python\nx = 1\n``` more ```python\ny = 2\n``` end"
+    assert extract_code_blocks(full) == ["x = 1", "y = 2"]
+    truncated = "prose ```python\nmcp.write_file('a', 'b'"
+    assert extract_code_blocks(truncated) == ["mcp.write_file('a', 'b'"]
+    assert extract_code_blocks("just prose, no code") == []

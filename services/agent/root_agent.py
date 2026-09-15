@@ -43,8 +43,23 @@ class TurnResult:
     verification: Optional[Dict[str, Any]] = None
 
 
-SYSTEM_PROMPT = """You are Prime Agent, a multimodal autonomous AI agent operating in a persistent Python RLM environment.
-You have programmatic access to the host environment through Python code blocks:
+def extract_code_blocks(content: str) -> List[str]:
+    """Extract ```python blocks, tolerating a truncated (unclosed) trailing block.
+
+    Pure + unit-tested. Truncation happens when max_tokens cuts the reply.
+    """
+    blocks = re.findall(r"```python\s*(.*?)\s*```", content, re.DOTALL)
+    if blocks:
+        return blocks
+    opener = content.rfind("```python")
+    if opener != -1:
+        tail = content[opener + len("```python"):].strip()
+        if tail:
+            return [tail]
+    return []
+
+
+SYSTEM_PROMPT = """You are Prime Agent, a multimodal autonomous AI agent operating in a persistent Python RLM environment.You have programmatic access to the host environment through Python code blocks:
 - rag.search(query, top_k): Hybrid dense/sparse search returning citations and contents.
 - rag.ingest(path): Ingests documents or directories into knowledge index.
 - rlm.spawn(task, name, role): Spawns independent subagents.
@@ -55,7 +70,25 @@ You have programmatic access to the host environment through Python code blocks:
 - mcp.call(server, tool, **args): Calls sandboxed tools.
 - bash(command): Executes shell commands.
 Variables defined in previous cells persist in your namespace.
-Write ```python ... ``` blocks to run code, inspect results, and solve tasks programmatically.
+HARD RULES:
+1. ACT through ```python blocks - never just describe what you would do. A response
+   without a code block means "task finished", so any task needing action REQUIRES code.
+2. To write files, call mcp filesystem tools (write_file) or bash heredocs inside a block.
+   CORRECT file write (await it, absolute path):
+   ```python
+   result = await mcp.call("local", "write_file", path="E:/proj/calc.py", content="x = 1\n")
+   print(result)
+   ```
+   WRONG (does not exist): mcp.write_file(...).
+   PREFERRED file write is plain Python inside the block (works on every OS):
+   ```python
+   from pathlib import Path
+   Path("E:/proj/calc.py").write_text("def add(a,b):\n    return a+b\n", encoding="utf-8")
+   print("wrote", Path("E:/proj/calc.py").stat().st_size, "bytes")
+   ```
+   Alternative: mcp.call("local", "write_file", path=..., content=...) or bash.
+3. After each execution result, continue with the next code block until done, then summarize.
+4. Final answers must be grounded in execution evidence (stdout, results, artifacts).
 When finished, provide your final response with facts grounded in execution evidence.
 """
 
@@ -229,16 +262,27 @@ class PrimeAgent:
         ]
 
         final_response = ""
+        nudged = False
 
         # Multi-turn programmatic RLM reasoning & execution loop
         for step in range(max_steps):
-            llm_resp = await self.llm_client.chat(messages, port=port, max_tokens=384)
+            llm_resp = await self.llm_client.chat(messages, port=port, max_tokens=2048)
             content = llm_resp.content.strip()
 
-            # Check for python code blocks to execute
-            code_blocks = re.findall(r"```python\s*(.*?)\s*```", content, re.DOTALL)
+            # Check for python code blocks to execute (tolerant of truncation)
+            code_blocks = extract_code_blocks(content)
 
             if not code_blocks:
+                # No-code guard: a prose-only reply must not end a task that
+                # needs action. Nudge ONCE, then accept whatever comes next.
+                if not nudged and step + 1 < max_steps:
+                    nudged = True
+                    messages.append({"role": "assistant", "content": content})
+                    messages.append({"role": "user", "content": (
+                        "You replied without a ```python block, so nothing was executed. "
+                        "The task requires real actions. Reply with at least one "
+                        "```python block now (e.g. write files via mcp tools or bash).")})
+                    continue
                 # No code blocks: agent has delivered final reasoning/response
                 final_response = content
                 break
@@ -320,18 +364,28 @@ class PrimeAgent:
 
         final_response = ""
         content = ""
+        nudged = False
 
         for step in range(max_steps):
             content = ""
-            async for ev in self.llm_client.chat_stream(messages, port=port, max_tokens=384):
+            async for ev in self.llm_client.chat_stream(messages, port=port, max_tokens=2048):
                 if "delta" in ev:
                     content += ev["delta"]
                     yield {"type": "delta", "text": ev["delta"]}
                 # {"done": ...} carries no extra text; content already accumulated
 
-            code_blocks = re.findall(r"```python\s*(.*?)\s*```", content, re.DOTALL)
+            code_blocks = extract_code_blocks(content)
 
             if not code_blocks:
+                if not nudged and step + 1 < max_steps:
+                    nudged = True
+                    yield {"type": "status", "text": "no code block produced — nudging agent to act…"}
+                    messages.append({"role": "assistant", "content": content})
+                    messages.append({"role": "user", "content": (
+                        "You replied without a ```python block, so nothing was executed. "
+                        "The task requires real actions. Reply with at least one "
+                        "```python block now (e.g. write files via mcp tools or bash).")})
+                    continue
                 final_response = content
                 break
 

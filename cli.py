@@ -101,9 +101,10 @@ def doctor():
     else:
         results.append(("Models Config", "Missing config/models.json", False))
 
-    # 4. Image Model
+    # 4. Image Model (weights must exist, not just the directory)
     img_path = Path("models/image/tiny-sd")
-    results.append(("Diffusion Model (tiny-sd)", str(img_path), img_path.exists()))
+    img_weights = img_path / "unet" / "diffusion_pytorch_model.safetensors"
+    results.append(("Diffusion Model (tiny-sd)", str(img_weights), img_weights.exists()))
 
     # 5. RLM Kernel
     try:
@@ -150,7 +151,7 @@ def doctor():
 def start():
     """Start the Prime Agent daemon in background."""
     from services.agent.daemon import PrimeDaemon
-    console.print("[green]Starting Prime Agent daemon...[/green]")
+    console.print("[green]Starting hcscoder daemon...[/green]")
     daemon = PrimeDaemon()
     asyncio.run(daemon.start())
     console.print("[bold green]Daemon started with heartbeat loop active.[/bold green]")
@@ -160,7 +161,7 @@ def start():
 def stop():
     """Stop the Prime Agent background daemon."""
     from services.agent.daemon import PrimeDaemon
-    console.print("[yellow]Stopping Prime Agent daemon...[/yellow]")
+    console.print("[yellow]Stopping hcscoder daemon...[/yellow]")
     daemon = PrimeDaemon()
     asyncio.run(daemon.stop())
     console.print("[bold yellow]Daemon stopped cleanly.[/bold yellow]")
@@ -383,7 +384,7 @@ def shutdown():
     """Gracefully shutdown all background processes, servers, and sessions."""
     from services.agent.daemon import PrimeDaemon
     from services.llm.model_manager import ModelManager
-    console.print("[bold red]Shutting down Prime Agent Platform...[/bold red]")
+    console.print("[bold red]Shutting down hcscoder...[/bold red]")
     mgr = ModelManager()
     mgr.shutdown()
     daemon = PrimeDaemon()
@@ -657,6 +658,17 @@ def commit_cmd(message: str, cwd: str):
         HCSRepl(rt, cwd=cwd).cmd_commit(message)
     finally:
         rt.shutdown()
+
+
+@cli.command(name="version")
+def version_cmd():
+    """Print hcscoder version (from pyproject)."""
+    import tomllib as _t
+    try:
+        ver = _t.load(open("pyproject.toml", "rb"))["project"]["version"]
+    except Exception:
+        ver = "unknown"
+    console.print(f"hcscoder {ver}")
 
 
 @cli.command(name="models")

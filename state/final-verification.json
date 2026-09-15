@@ -1,7 +1,7 @@
 {
   "timestamp": "Tue Sep 15 2026 (V3 workbench)",
   "all_criteria_verified": true,
-  "criteria_count": 41,
+  "criteria_count": 45,
   "results": {
     "RLM": {
       "status": "VERIFIED",
@@ -166,6 +166,22 @@
     "TESTS_FINAL": {
       "status": "VERIFIED",
       "evidence": "35 passed"
+    },
+    "LINUX_INSTALLER": {
+      "status": "VERIFIED",
+      "evidence": "WSL Ubuntu 22.04: PYTHON_BIN fix, venv+pip+symlinks+hcscoder --help green; skip-path doctor honest FAILs on binaries"
+    },
+    "LONG_HORIZON": {
+      "status": "VERIFIED",
+      "evidence": "live_long_task phased: calculator.py + 6 asserts pytest green independent; loop hardened (nudge, tolerant fences, 2048 tok, error types, 300s timeout)"
+    },
+    "BRANDING": {
+      "status": "VERIFIED",
+      "evidence": "hcscoder in API title, daemon msgs, version cmd 3.1.0, .gitattributes LF for sh"
+    },
+    "TESTS_36": {
+      "status": "VERIFIED",
+      "evidence": "36 passed"
     }
   }
 }

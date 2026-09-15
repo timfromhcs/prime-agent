@@ -11,9 +11,12 @@ SKIP_LLAMACPP="${SKIP_LLAMACPP:-0}"
 
 echo "=== PRIME AGENT V3 INSTALLER (Linux) ==="
 
-# 1. Python 3.12+
-if ! command -v python3 >/dev/null; then echo "ERROR: python3 required." >&2; exit 1; fi
-PYVER=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
+# 1. Python 3.12+ (auto-detect: python3.12 preferred, PYTHON_BIN override)
+if [[ -z "${PYTHON_BIN:-}" ]]; then
+  if command -v python3.12 >/dev/null; then PYTHON_BIN=python3.12; else PYTHON_BIN=python3; fi
+fi
+if ! command -v "$PYTHON_BIN" >/dev/null; then echo "ERROR: python3.12+ required (tried $PYTHON_BIN)." >&2; exit 1; fi
+PYVER=$("$PYTHON_BIN" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')
 if [[ "$PYVER" < "3.12" ]]; then echo "ERROR: Python 3.12+ required (found $PYVER)." >&2; exit 1; fi
 echo "[OK] Python $PYVER"
 
@@ -31,8 +34,8 @@ echo "[OK] Source -> $INSTALL_DIR"
 
 # 3. Virtualenv + dependencies (validates pyproject.toml)
 if [[ ! -x "$INSTALL_DIR/.venv/bin/python" ]]; then
-  echo "Creating venv..."
-  python3 -m venv "$INSTALL_DIR/.venv"
+  echo "Creating venv with $PYTHON_BIN..."
+  "$PYTHON_BIN" -m venv "$INSTALL_DIR/.venv"
 fi
 "$INSTALL_DIR/.venv/bin/python" -m pip install --upgrade pip
 "$INSTALL_DIR/.venv/bin/python" -m pip install "$INSTALL_DIR"

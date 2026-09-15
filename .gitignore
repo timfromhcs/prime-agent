@@ -27,3 +27,6 @@ state/subagents_v2/
 
 # Build artifacts
 dist/
+
+# Long-horizon proof workspace (recreated by scripts/live_long_task.py)
+tmp_longhorn_task/

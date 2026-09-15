@@ -75,15 +75,16 @@ enforced read-only; AUTO mode is bounded (turn/tool/subagent/time budgets).
 | REPL / SSE parser / lazy startup / entry points | ✅ | `test_hcscoder.py` (8 tests) |
 | llama.cpp tuning (FA on, KV q8_0, draft n-max 8) | ✅ | `test_llama_tuning.py`; flags on server exec line |
 | Live LLM loop (server 3.2 s, 29 stream deltas, BUILD `RESULT:157`, FACT) | ✅ | `scripts/live_check.py` exit 0 |
+| Long-horizon (scaffold calc → 6 asserts → repair → pytest green, phased, resuming) | ✅ | `scripts/live_long_task.py` → `LONG-HORIZON BUILD: PASS` (6 passed); loop hardened along the way (no-code nudge, truncation-tolerant fences, 2048 tok, error types) |
 | Speculative A/B | ✅ measured, modest | 24.0 vs 22.6 tok/s decode (short output, single run; no acceptance counter in build 10977) |
 | CLI startup | ✅ 0.2 s | lazy imports (was 9.8 s) |
 | Headless stress (10 rounds parallel sessions/RAG/terminals) | ✅ 0 failures | `scripts/stress_headless.py` |
 | Every CLI command headless incl. serve+health | ✅ | bug-loop 2026-09-15 (review/commit/REPL/TUI piped, exit 0) |
 | Models on disk (SHA256) | ✅ | `hcscoder doctor` → ALL SUBSYSTEMS VERIFIED |
-| Full suite | ✅ **35 passed** | `pytest tests/` |
-| Linux installer | ⚠️ untested | straightforward script; issues welcome |
-| BUILD/AUTO long-horizon tasks | ⚠️ loop proven, horizons vary | bounded by budgets; quality depends on local 4B model |
-| Desktop app / cloud build | ❌ not included | out of scope |
+| Full suite | ✅ **36 passed** | `pytest tests/` |
+| Linux installer | tested in WSL Ubuntu 22.04 | venv + full pip install + symlinks + `hcscoder --help` green; found+fixed `PYTHON_BIN` auto-detect bug; models/llama via documented skip flags |
+| BUILD/AUTO long-horizon tasks | proven within budgets | phased scaffold→test→repair converges; ~1–2 min/step on local 4B |
+| Desktop app | ❌ out of scope (by decision) | CLI UX is the product: streaming REPL, review/commit, approvals, hcscoder branding |
 
 ---
 

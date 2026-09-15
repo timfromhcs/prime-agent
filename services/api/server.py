@@ -59,7 +59,7 @@ class TermRun(BaseModel):
 
 def create_app(runtime: Optional[PrimeRuntime] = None) -> FastAPI:
     rt = runtime or PrimeRuntime()
-    app = FastAPI(title="Prime Agent Daemon", version="3.0.0")
+    app = FastAPI(title="hcscoder Daemon", version="3.1.0")
     app.state.runtime = rt
 
     @app.get("/api/health")

@@ -1,0 +1,4 @@
+# Keep shell scripts LF so the Linux installer works after checkout on Windows.
+*.sh text eol=lf
+*.ps1 text eol=crlf
+*.py text eol=crlf

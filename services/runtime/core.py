@@ -112,7 +112,7 @@ class PrimeRuntime:
         if stop:
             self.sessions.append_message(session_id, "system", f"AUTO halted: {stop}.")
             return {"ok": False, "reason": stop}
-        max_steps = 5 if mode == "BUILD" else min(budget.max_turns, 8)
+        max_steps = 8 if mode == "BUILD" else min(budget.max_turns, 8)
         try:
             self.emit("task.started", session_id, {"mode": mode})
             # permission gate for shell-affecting tasks is advisory here; kernel tools enforce per-call
@@ -141,10 +141,13 @@ class PrimeRuntime:
                     "verification": turn.verification,
                     "elapsed_s": round(time.time() - t0, 2)}
         except Exception as e:  # structured error UX, never raw-only
+            import traceback as _tb
+            err = f"{type(e).__name__}: {e}" if str(e) else f"{type(e).__name__}"
+            tail = _tb.format_exc(limit=3)[-800:]
             self.sessions.append_message(session_id, "system",
-                                         f"WHAT FAILED: agent turn. WHY: {e}. STATE: session persisted. RETRY: /retry or interrupt with stop.")
-            self.emit("task.failed", session_id, {"error": str(e)[:500]})
-            return {"ok": False, "reason": str(e)[:500]}
+                                         f"WHAT FAILED: agent turn. WHY: {err}. STATE: session persisted. RETRY: /retry or interrupt with stop.\nTRACE:\n{tail}")
+            self.emit("task.failed", session_id, {"error": err[:500]})
+            return {"ok": False, "reason": err[:500]}
 
     # -- subagents (real delegation) --
     def spawn_subagent(self, session_id: str, task: str, name: str, role: str = "research") -> Dict[str, Any]:
@@ -230,7 +233,7 @@ class PrimeRuntime:
             self.sessions.append_message(session_id, "system", f"AUTO halted: {stop}.")
             yield {"type": "error", "reason": stop}
             return
-        max_steps = 5 if mode == "BUILD" else min(budget.max_turns, 8)
+        max_steps = 8 if mode == "BUILD" else min(budget.max_turns, 8)
         try:
             self.emit("task.started", session_id, {"mode": mode})
             yield {"type": "status", "text": f"{mode}: contacting local model..."}
@@ -271,7 +274,10 @@ class PrimeRuntime:
                    "verification": turn.verification,
                    "elapsed_s": round(time.time() - t0, 2)}
         except Exception as e:
+            import traceback as _tb2
+            err = f"{type(e).__name__}: {e}" if str(e) else f"{type(e).__name__}"
+            tail = _tb2.format_exc(limit=3)[-800:]
             self.sessions.append_message(session_id, "system",
-                                         f"WHAT FAILED: agent turn. WHY: {e}. STATE: session persisted.")
-            self.emit("task.failed", session_id, {"error": str(e)[:500]})
-            yield {"type": "error", "reason": str(e)[:500]}
+                                         f"WHAT FAILED: agent turn. WHY: {err}. STATE: session persisted.\nTRACE:\n{tail}")
+            self.emit("task.failed", session_id, {"error": err[:500]})
+            yield {"type": "error", "reason": err[:500]}
