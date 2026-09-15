@@ -2,10 +2,12 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
-**Local-first autonomous agent workbench** — RLM runtime, subagents, RAG, MCP, vision, image
-generation/editing, self-healing, and a session-first workbench UI (interactive REPL, TUI, CLI, daemon API sharing one core).
+**Local-first autonomous agent workbench.** RLM runtime with persistent Python kernel,
+subagents, hybrid RAG, MCP tools, vision, local image generation/editing, self-healing —
+driven through an interactive streaming REPL, a TUI, a CLI, and a daemon HTTP+SSE API
+that all share one backend core. No cloud required.
 
-No cloud required. No chat gimmicks: every subsystem below is backed by the test or diagnostic named next to it.
+Every claim below names its evidence. Where something is untested or limited, it says so.
 
 ---
 
@@ -23,97 +25,84 @@ irm https://raw.githubusercontent.com/timfromhcs/prime-agent/main/install.ps1 | 
 curl -fsSL https://raw.githubusercontent.com/timfromhcs/prime-agent/main/install.sh | bash
 ```
 
-The installer downloads the source archive, creates `.venv`, runs `pip install .`
-(exposing the `hcscoder` command; `prime-agent` stays as alias), fetches GGUF models
-(SHA256-verified, ~7.5 GB) + llama.cpp runtimes, adds the venv to PATH,
-and runs `hcscoder doctor`. Options:
+What the installer does: downloads the source archive (no clone), creates `.venv`,
+runs `pip install .` (exposes `hcscoder`; `prime-agent` stays as alias), fetches GGUF
+models SHA256-verified (~7.5 GB) + llama.cpp runtimes (Windows: CPU+Vulkan, Linux: CPU),
+adds the binary to PATH, runs `hcscoder doctor`.
 
-| Env / flag | Effect |
+| Flag | Effect |
 |---|---|
-| `-SkipModels` / `SKIP_MODELS=1` | skip ~7.5 GB model download |
-| `-SkipLlamaCpp` / `SKIP_LLAMACPP=1` | skip llama.cpp runtime download |
-| `-InstallDir X` / `INSTALL_DIR=X` | custom target directory |
+| `-SkipModels` / `SKIP_MODELS=1` | skip model download |
+| `-SkipLlamaCpp` / `SKIP_LLAMACPP=1` | skip llama.cpp download |
+| `-InstallDir X` / `INSTALL_DIR=X` | custom directory |
 
-Manual install instead:
-
-```powershell
-git clone https://github.com/timfromhcs/prime-agent.git
-cd prime-agent
-.\bootstrap.ps1
-.\install.ps1
-```
-
----
-
-## Requirements (honest)
-
-| | Windows | Linux |
-|---|---|---|
-| OS / Python | Windows 11, Python 3.12+ | any distro, Python 3.12+ |
-| RAM | 16 GB recommended | 16 GB recommended |
-| Disk | ~10 GB free (models + venv) | ~10 GB free |
-| GPU | optional Vulkan (AMD/NVIDIA auto-detect) | CPU build; CUDA/Vulkan = manual llama.cpp install |
+Manual alternative: `git clone https://github.com/timfromhcs/prime-agent.git`,
+then `.\bootstrap.ps1` + `.\install.ps1` (fetch scripts live in `scripts/`).
 
 ---
 
 ## Use
 
 ```powershell
-hcscoder                      # interactive REPL (Claude-Code-class UX, streaming)
-hcscoder run "Refactor X"     # one-shot task with live tokens + tool cards
-hcscoder run "..." --mode PLAN# read-only planning
+hcscoder                      # interactive REPL: streaming tokens, tool cards, /help
+hcscoder run "Migrate X"      # one-shot task, live output; --mode PLAN|BUILD|AUTO
 hcscoder review               # diff review: keep/revert per file
-hcscoder commit -m "msg"      # safe commit (status first, never force)
-hcscoder models               # local model catalog with presence status
-hcscoder serve --port 8000    # daemon HTTP+SSE API; TUI attaches via --daemon
-hcscoder session new "Title"  # sessions: list / fork / archive / compact / export
-hcscoder ask <session> "..."  # one bounded task in a session
-hcscoder doctor               # full diagnostics (hashes, runtimes, kernel, RAG, MCP)
-hcscoder benchmark            # real tok/s + RAG latency report
+hcscoder commit -m "msg"      # safe commit (status first, asks identity if missing)
+hcscoder models               # local catalog with real installed/missing status
+hcscoder tui                  # workbench TUI (or --daemon http://127.0.0.1:8000)
+hcscoder serve --port 8000    # daemon API: /api/health, /api/sessions, /api/events/stream
+hcscoder session new "Title"  # + list/fork/mode/compact/export/archive
+hcscoder term new/run/list/rename/close   # real PowerShell sessions
+hcscoder perm decide/allow    # allow/ask/deny engine
+hcscoder mcp                  # 6 registered tools | hcscoder rag search "..."
+hcscoder doctor               # full diagnostics | hcscoder benchmark | hcscoder optimize
 ```
 
-REPL slash commands: `/plan /build /auto /diff /review /commit /models /doctor /todo /compact /export /sessions /help`.
-`@path/to/file` embeds file context. Risky prompts trigger an inline approval
-(`once` / `session` / `deny`); the MCP policy engine enforces underneath regardless.
+REPL extras: `@path/to/file` embeds file context; risky prompts trigger inline approval
+(`once`/`session`/`deny`); `Ctrl+C` interrupts with state persisted; PLAN mode is
+enforced read-only; AUTO mode is bounded (turn/tool/subagent/time budgets).
 
 ---
 
-## Verification status (evidence, not claims)
+## Verification status (evidence, not marketing)
 
 | Subsystem | Status | Evidence |
 |---|---|---|
-| RLM persistent kernel | ✅ verified | `tests/test_rlm_kernel.py` (42 → 84 across cells) |
-| MCP (6 tools) | ✅ verified | `tests/test_mcp.py` |
-| RAG hybrid + rerank | ✅ verified | `tests/test_rag*.py` |
-| Sessions / permissions / modes / daemon API / terminals | ✅ verified | `tests/test_v3_workbench.py` (6 tests) |
-| hcscoder REPL helpers / SSE parser / lazy startup | ✅ verified | `tests/test_hcscoder.py` (6 tests) |
-| CLI startup (`--help`) | ✅ 0.2s | lazy imports (`services/agent/__init__` PEP 562, per-command imports) |
-| Windows cp1252 pipe-safety | ✅ fixed | all CLI output ASCII-safe; found via piped REPL smoke test |
-| Models on disk (SHA256) | ✅ verified | `prime-agent doctor`, `config/models.json` |
-| Full suite | ✅ 30 passed | `pytest tests/` |
-| BUILD/AUTO with live LLM | ⚠️ needs `llama-server` running | PLAN-path tested; LLM loop is real code, not mocked |
-| Linux installer | ⚠️ untested on real Linux | script is straightforward; report issues |
-| Desktop app / cloud build | ❌ not included | out of scope for V3 |
+| RLM persistent kernel | ✅ | `test_rlm_kernel.py` (42 → 84 across cells) |
+| MCP (6 tools) | ✅ | `test_mcp.py` |
+| RAG hybrid + rerank | ✅ | `test_rag*.py`; live p50 8 ms (`stress_headless.py`) |
+| Sessions / permissions / modes / API / terminals | ✅ | `test_v3_workbench.py` |
+| REPL / SSE parser / lazy startup / entry points | ✅ | `test_hcscoder.py` (8 tests) |
+| llama.cpp tuning (FA on, KV q8_0, draft n-max 8) | ✅ | `test_llama_tuning.py`; flags on server exec line |
+| Live LLM loop (server 3.2 s, 29 stream deltas, BUILD `RESULT:157`, FACT) | ✅ | `scripts/live_check.py` exit 0 |
+| Speculative A/B | ✅ measured, modest | 24.0 vs 22.6 tok/s decode (short output, single run; no acceptance counter in build 10977) |
+| CLI startup | ✅ 0.2 s | lazy imports (was 9.8 s) |
+| Headless stress (10 rounds parallel sessions/RAG/terminals) | ✅ 0 failures | `scripts/stress_headless.py` |
+| Every CLI command headless incl. serve+health | ✅ | bug-loop 2026-09-15 (review/commit/REPL/TUI piped, exit 0) |
+| Models on disk (SHA256) | ✅ | `hcscoder doctor` → ALL SUBSYSTEMS VERIFIED |
+| Full suite | ✅ **35 passed** | `pytest tests/` |
+| Linux installer | ⚠️ untested | straightforward script; issues welcome |
+| BUILD/AUTO long-horizon tasks | ⚠️ loop proven, horizons vary | bounded by budgets; quality depends on local 4B model |
+| Desktop app / cloud build | ❌ not included | out of scope |
 
 ---
 
-## Architecture
+## Architecture (one core, four clients)
 
-One core, three clients: **TUI** (`tui/`) + **CLI** (`cli.py`) + **daemon API** (`services/api/`)
-all call `PrimeRuntime` (`services/runtime/core.py`). Details:
+`services/runtime/core.py` (`PrimeRuntime`) owns task/goal/plan/execution/tools/subagents/memory.
+REPL (`services/cli/`), TUI (`tui/`), CLI (`cli.py`), daemon API (`services/api/`) render it —
+no logic duplicated. Docs: `ARCHITECTURE.md RLM.md SUBAGENTS.md RAG.md MCP.md MODELS.md
+VISION.md IMAGE_GENERATION.md IMAGE_EDITING.md MEMORY.md AUTONOMY.md OPTIMIZATION.md
+SECURITY.md TROUBLESHOOTING.md UI.md`.
 
-- `ARCHITECTURE.md` · `RLM.md` · `SUBAGENTS.md` · `RAG.md` · `MCP.md` · `MODELS.md`
-- `VISION.md` · `IMAGE_GENERATION.md` · `IMAGE_EDITING.md` · `MEMORY.md`
-- `AUTONOMY.md` · `OPTIMIZATION.md` · `SECURITY.md` · `TROUBLESHOOTING.md` · `UI.md`
+Tuned for Ryzen 7 7735HS + Radeon 680M (Vulkan, unified memory): full offload, q8_0 KV,
+flash-attn on, Qwen2.5-0.5B draft. See `OPTIMIZATION.md §9` for measured numbers.
 
----
+## Security
 
-## Security notes
-
-- Never commit tokens or `.env` files — the permission engine (`services/permissions/engine.py`)
-  treats `*.env *credentials* *secret* *.pem` as approval-gated by default.
-- Large binaries (`.gguf`, `.safetensors`, llama.cpp `.exe`/`.dll`, `.venv`) are git-ignored
-  on purpose and re-fetched with hash checks by `scripts/fetch_binaries.py`.
+- Secrets never committed (`.gitignore` + permission engine gates `*.env *credentials* *.pem`).
+- Destructive patterns (`rm -rf /`, `push --force`) are deny-by-default; REPL re-confirms.
+- Binaries re-fetched with hash checks (`scripts/fetch_binaries.py`), never stored in git.
 
 ## License
 

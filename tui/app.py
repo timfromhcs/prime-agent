@@ -3,7 +3,7 @@
 Layout: sessions | chat/task | context. Bottom: terminal/activity line.
 Slash commands + Ctrl+P style palette (via `/palette`).
 
-Run:  prime-agent tui   (local runtime)  or  prime-agent tui --daemon http://127.0.0.1:8000
+Run:  hcscoder (REPL) / hcscoder tui   (local runtime)  or  hcscoder (REPL) / hcscoder tui --daemon http://127.0.0.1:8000
 """
 
 from __future__ import annotations
@@ -211,7 +211,7 @@ class WorkbenchTUI:
         if cmd == "/term":
             rt = self.client._local
             if rt is None:
-                console.print("[yellow]Terminal mgmt needs local runtime; use prime-agent term run.[/yellow]")
+                console.print("[yellow]Terminal mgmt needs local runtime; use hcscoder term run.[/yellow]")
                 return True
             terms = rt.terminals.list()
             t = terms[0] if terms else rt.terminals.create(cwd=self.cwd)
@@ -258,13 +258,13 @@ class WorkbenchTUI:
                     console.print(Markdown((self.client._local.sessions.export(self.session_id) or "")[:5000]))
             return True
         if cmd == "/image" and args:
-            console.print("[yellow]Image runs through the agent loop - send as chat, e.g. 'generate an image of ...'. Direct: prime-agent run.[/yellow]")
+            console.print("[yellow]Image runs through the agent loop - send as chat, e.g. 'generate an image of ...'. Direct: hcscoder run.[/yellow]")
             return True
         console.print(f"[yellow]Unknown command {cmd}. /help for list.[/yellow]")
         return True
 
     def run(self) -> None:
-        console.print(Panel("[bold]PRIME AGENT workbench[/bold] - sessions-first - PLAN/BUILD/AUTO - /help - /palette",
+        console.print(Panel("[bold]hcscoder workbench[/bold] - sessions-first - PLAN/BUILD/AUTO - /help - /palette",
                             border_style="cyan"))
         self.ensure_session()
         self.show_sessions()

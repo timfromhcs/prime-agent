@@ -54,3 +54,22 @@ def test_entry_points_hcscoder():
     scripts = d["project"]["scripts"]
     assert scripts["hcscoder"] == "cli:cli"
     assert scripts["prime-agent"] == "cli:cli"  # alias kept
+
+
+def test_terminal_rename_close(tmp_path):
+    from services.terminal.sessions import TerminalManager
+    tm = TerminalManager(store_dir=str(tmp_path / "t"))
+    t = tm.create(name="orig", cwd=".")
+    assert tm.rename(t.term_id, "renamed") is True
+    assert tm.terminals[t.term_id].name == "renamed"
+    assert tm.rename("term_nope", "x") is False
+    assert tm.close(t.term_id) is True
+    assert tm.close(t.term_id) is False
+
+
+def test_permission_sensitive_paths_gated(tmp_path):
+    from services.permissions.engine import PermissionEngine
+    eng = PermissionEngine(policy_file=str(tmp_path / "perms.json"))
+    assert eng.decide("read_file", "notes.txt", "s1")["decision"] == "allow"
+    assert eng.decide("read_file", ".env", "s1")["decision"] in ("ask", "deny")
+    assert eng.decide("shell_exec", "rm -rf /*", "s1")["decision"] == "deny"

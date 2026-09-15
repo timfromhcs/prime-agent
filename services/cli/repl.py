@@ -203,6 +203,14 @@ class HCSRepl:
         msg = message or Prompt.ask("Commit message")
         if not msg.strip():
             return
+        ident = subprocess.run(["git", "config", "user.name"], cwd=cwd,
+                               capture_output=True, text=True)
+        if ident.returncode != 0 or not ident.stdout.strip():
+            self.console.print("[yellow]No git identity in this repo.[/yellow]")
+            name = Prompt.ask("Your name for commits", default="hcscoder")
+            email = Prompt.ask("Your email for commits", default="hcscoder@localhost")
+            subprocess.run(["git", "config", "user.name", name], cwd=cwd)
+            subprocess.run(["git", "config", "user.email", email], cwd=cwd)
         add = subprocess.run(["git", "add", "-A"], cwd=cwd, capture_output=True, text=True)
         if add.returncode != 0:
             self.console.print(f"[red]git add failed: {add.stderr}[/red]")

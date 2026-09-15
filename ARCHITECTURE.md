@@ -18,7 +18,7 @@ This document describes the high-level architecture, module decomposition, data 
 
 ```mermaid
 flowchart TD
-    CLI["CLI / PowerShell / Daemon (prime.ps1)"] --> RootAgent["PrimeAgent (services/agent/root_agent.py)"]
+    CLI["CLI / PowerShell / Daemon (hcscoder.ps1)"] --> RootAgent["PrimeAgent (services/agent/root_agent.py)"]
     
     subgraph "Core Orchestration & Cognition"
         RootAgent --> Router["Task Router (services/llm/router.py)"]

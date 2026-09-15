@@ -78,10 +78,10 @@ Visual documents (diagrams, architecture charts, receipts, screenshots) are inge
 ### Ingesting Files or Directories via CLI:
 ```powershell
 # Ingest single file
-.\prime.ps1 rag ingest "data/documents/agent_spec.md"
+.\hcscoder.ps1 rag ingest "data/documents/agent_spec.md"
 
 # Ingest entire directory
-.\prime.ps1 rag ingest "docs/"
+.\hcscoder.ps1 rag ingest "docs/"
 ```
 
 ### Searching from Python:

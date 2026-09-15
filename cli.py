@@ -1,15 +1,16 @@
-"""Prime Agent CLI - Command Line Interface for Headless Operation.
+"""hcscoder CLI - Command Line Interface for Headless Operation.
 
+Primary entry point: hcscoder (prime-agent remains as alias).
 Provides complete headless control:
-- prime-agent start / stop / status / doctor / update / shutdown
-- prime-agent run "<task>"
-- prime-agent goal "<goal>"
-- prime-agent agents
-- prime-agent attach <id>
-- prime-agent rag ingest <path>
-- prime-agent rag search "<query>"
-- prime-agent benchmark
-- prime-agent optimize
+- hcscoder                  (interactive REPL, streaming)
+- hcscoder run "<task>" [--mode PLAN|BUILD|AUTO]
+- hcscoder serve            (daemon HTTP+SSE API)
+- hcscoder session new/list/fork/archive/compact/export
+- hcscoder review / commit / models / doctor / benchmark
+- hcscoder goal "<goal>"
+- hcscoder agents
+- hcscoder rag ingest <path> / rag search "<query>"
+- hcscoder term new/run | perm decide/allow | image "<prompt>"
 """
 
 from __future__ import annotations
@@ -55,7 +56,7 @@ def cli(ctx, cwd: str):
 @cli.command()
 def doctor():
     """Run real environment and component diagnostics."""
-    console.print("\n[bold cyan]=== PRIME AGENT DIAGNOSTICS (prime doctor) ===[/bold cyan]\n")
+    console.print("\n[bold cyan]=== hcscoder doctor ===[/bold cyan]\n")
 
     results = []
 
@@ -171,7 +172,7 @@ def status():
     from services.agent.daemon import PrimeDaemon
     daemon = PrimeDaemon()
     st = daemon.get_status()
-    console.print("\n[bold cyan]=== PRIME AGENT DAEMON STATUS ===[/bold cyan]")
+    console.print("\n[bold cyan]=== hcscoder daemon status ===[/bold cyan]")
     console.print(f"Daemon Running: {st.get('running')}")
     console.print(f"Total Sessions: {st.get('total_sessions')}")
     console.print(f"Active Sessions: {st.get('active_sessions')}")
@@ -554,6 +555,36 @@ def term_new(name: str, cwd: str):
 def term_run(term_id: str, command: str):
     from services.terminal.sessions import TerminalManager
     console.print(TerminalManager().run(term_id, command))
+
+
+@term_grp.command(name="list")
+def term_list():
+    from services.terminal.sessions import TerminalManager
+    for t in TerminalManager().list():
+        console.print(f"{t.term_id}  {t.name}  [{len(t.log)} entries]")
+
+
+@term_grp.command(name="rename")
+@click.argument("term_id")
+@click.argument("name")
+def term_rename(term_id: str, name: str):
+    from services.terminal.sessions import TerminalManager
+    console.print({"ok": TerminalManager().rename(term_id, name)})
+
+
+@term_grp.command(name="close")
+@click.argument("term_id")
+def term_close(term_id: str):
+    from services.terminal.sessions import TerminalManager
+    console.print({"ok": TerminalManager().close(term_id)})
+
+
+@cli.command(name="mcp")
+def mcp_cmd():
+    """List registered MCP tools (real registry, no mocks)."""
+    from services.mcp.tools import MCPToolRegistry
+    for name in sorted(MCPToolRegistry().tools.keys()):
+        console.print(f"  - {name}")
 
 
 @cli.group(name="perm")

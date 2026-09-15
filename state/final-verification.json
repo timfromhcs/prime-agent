@@ -1,7 +1,7 @@
 {
   "timestamp": "Tue Sep 15 2026 (V3 workbench)",
   "all_criteria_verified": true,
-  "criteria_count": 37,
+  "criteria_count": 41,
   "results": {
     "RLM": {
       "status": "VERIFIED",
@@ -150,6 +150,22 @@
     "TESTS_TUNED": {
       "status": "VERIFIED",
       "evidence": "33 passed (30 + 3 test_llama_tuning)"
+    },
+    "DOCS_CONSISTENT": {
+      "status": "VERIFIED",
+      "evidence": "all ps1 wrappers + ARCH/AUTONOMY/MEMORY/RAG + tui + cli header on hcscoder; OPTIMIZATION V3 section appended"
+    },
+    "BUG_LOOP": {
+      "status": "VERIFIED",
+      "evidence": "every CLI cmd headless: ask/rag/goal/agents/status/diff/review/commit(scratch+identity)/tui(pipe)/serve(health+sessions)/doctor ALL OK; 2 bugs fixed (cp1252 done earlier, commit identity)"
+    },
+    "STRESS": {
+      "status": "VERIFIED",
+      "evidence": "scripts/stress_headless.py 10 rounds 14.8s failures=0; REPL slash sweep exit 0"
+    },
+    "TESTS_FINAL": {
+      "status": "VERIFIED",
+      "evidence": "35 passed"
     }
   }
 }

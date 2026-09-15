@@ -1,2 +1,2 @@
-# Prime Agent Optimizer
-& "$PSScriptRoot\prime.ps1" optimize
+# hcscoder Optimizer
+& "$PSScriptRoot\hcscoder.ps1" optimize

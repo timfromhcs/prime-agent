@@ -100,3 +100,32 @@ To support different task demands and memory constraints, the platform defines 7
   }
 }
 ```
+
+---
+
+## 9. V3 Tuned Server Profile (measured 2026-09-15, same host)
+
+Section 2 above is the V2 historical record (f16 KV). V3 wires tuning flags that
+previously existed only on paper in config files:
+
+| Flag | V2 (actual) | V3 (actual, verified on exec line) |
+| :--- | :--- | :--- |
+| Flash Attention | not passed (llama default auto) | `-fa on` |
+| KV cache K/V | not passed (f16 default) | `-ctk q8_0 -ctv q8_0` (halves KV RAM) |
+| Draft KV | not passed | `-ctkd q8_0 -ctvd q8_0` |
+| Draft window | `-md` + n-max 8 | `-md` + `--spec-draft-n-max 8 --spec-draft-n-min 2 -td 4 -ngld 99` |
+| Offload | `-ngl 99` | unchanged (correct for 680M unified memory) |
+| Profile source | `server.json` only | `optimal-profile.json` overrides `server.json` (unit-tested) |
+
+Fresh A/B, same prompt family, build 10977 (`scripts/live_check.py` + manual A/B):
+
+| Run | Prefill | Decode |
+| :--- | :--- | :--- |
+| spec ON (q8_0 KV, FA on) | 109.8 tok/s | 24.0 tok/s |
+| spec OFF (q8_0 KV, FA on) | 101.9 tok/s | 22.6 tok/s |
+| `live_check` inference | 31.5 tok/s | 26.4 tok/s |
+| `live_check` BUILD task | 1 kernel action, RESULT:157, verification FACT | exit 0 |
+
+Honest notes: short-output samples, single runs (noise possible); build 10977 exposes
+no per-request draft acceptance counter, so acceptance rate is NOT claimed - only the
+A/B delta above. `mlock` intentionally off (Windows shared iGPU memory).

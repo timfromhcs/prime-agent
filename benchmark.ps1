@@ -1,2 +1,2 @@
-# Prime Agent Benchmark
-& "$PSScriptRoot\prime.ps1" benchmark
+# hcscoder Benchmark
+& "$PSScriptRoot\hcscoder.ps1" benchmark

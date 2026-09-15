@@ -1,4 +1,4 @@
-# Prime Agent Bootstrap Script
+# hcscoder Bootstrap Script
 $ErrorActionPreference = "Stop"
 
 Write-Host "=== BOOTSTRAPPING PRIME AGENT ENVIRONMENT ===" -ForegroundColor Cyan

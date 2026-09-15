@@ -60,10 +60,10 @@ Prime Agent implements a persistent, structured, multi-tier memory architecture 
 ### Managing Goals via CLI:
 ```powershell
 # Register a long-term goal
-.\prime.ps1 goal "Continuously benchmark LLM latency and update optimal profile"
+.\hcscoder.ps1 goal "Continuously benchmark LLM latency and update optimal profile"
 
 # View status
-.\prime.ps1 status
+.\hcscoder.ps1 status
 ```
 
 ### Python API:

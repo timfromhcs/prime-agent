@@ -1,2 +1,2 @@
-# Prime Agent Stop Daemon
-& "$PSScriptRoot\prime.ps1" stop
+# hcscoder Stop Daemon
+& "$PSScriptRoot\hcscoder.ps1" stop

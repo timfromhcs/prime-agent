@@ -1,4 +1,4 @@
-# Prime Agent CLI PowerShell Wrapper
+# prime-agent alias shim (primary: hcscoder.ps1)
 param(
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$ArgsList

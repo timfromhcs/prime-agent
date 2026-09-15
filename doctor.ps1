@@ -1,2 +1,2 @@
-# Prime Agent Doctor
-& "$PSScriptRoot\prime.ps1" doctor
+# hcscoder Doctor
+& "$PSScriptRoot\hcscoder.ps1" doctor

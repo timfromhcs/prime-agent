@@ -1,4 +1,4 @@
-# Prime Agent Update Script (Idempotent, Safe Updates)
+# hcscoder Update Script (Idempotent, Safe Updates)
 $ErrorActionPreference = "Stop"
 
 Write-Host "=== CHECKING PRIME AGENT UPDATES ===" -ForegroundColor Cyan
@@ -11,4 +11,4 @@ uv pip install --python $PythonExe --link-mode=copy --upgrade `
     dill psutil pydantic fastapi uvicorn rich click httpx
 
 Write-Host "Running health check after update..." -ForegroundColor Yellow
-& "$PSScriptRoot\prime.ps1" doctor
+& "$PSScriptRoot\hcscoder.ps1" doctor

@@ -54,4 +54,4 @@ When an execution step throws an exception, encounters a syntax error, or fails 
 Prime Agent operates as a persistent Windows background service:
 - **Heartbeat Loop**: Periodically (every 30 seconds) inspects registered goals, active subagent sessions, and hardware resource consumption.
 - **Task Scheduler**: Executes recurring maintenance tasks (e.g., compaction of episodic logs, index refreshes, hardware temperature checks).
-- **Graceful Control**: Started via `start.ps1`, monitored via `prime.ps1 status`, and stopped via `stop.ps1`.
+- **Graceful Control**: Started via `start.ps1`, monitored via `hcscoder status`, and stopped via `stop.ps1`.

@@ -1,47 +1,46 @@
-# Prime Agent Workbench UI (V3)
+# hcscoder UI / UX (V3)
 
-Session-first developer workbench. The UI is a **client** of `PrimeRuntime`
-(`services/runtime/core.py`) — the same core the CLI and daemon API use.
-No agent logic is duplicated in the UI layer.
+Two clients, one core. `PrimeRuntime` (`services/runtime/core.py`) owns all agent state;
+the REPL (`hcscoder`, no args) and the TUI (`hcscoder tui`) only render it.
 
-## Entry points
+## Interactive REPL (primary)
 
 ```powershell
-.\prime.ps1 tui                                  # local runtime
-.\prime.ps1 tui --daemon http://127.0.0.1:8000   # attached to daemon
-.\prime.ps1 serve --port 8000                    # daemon HTTP+SSE API
+hcscoder                    # local runtime, streaming
 ```
 
-## Layout (Rich TUI, `tui/app.py`)
+- Live token streaming (`chat_stream` SSE with non-SSE fallback), tool status lines,
+  final markdown panel with verification + artifacts + elapsed time.
+- Footer after every turn: session, mode, message/tool/token counters (real usage counters).
+- `/plan /build /auto /diff /review /commit /models /doctor /compact /export /sessions /help`
+- `@path` embeds capped file context; risky prompts hit an inline approval
+  (`once` / `session` /deny) backed by `PermissionEngine` (MCP policy enforces underneath).
+- `Ctrl+C` interrupts; state persists; exit code 0 on `/quit`.
+- All output is ASCII-safe (Windows cp1252 pipes verified).
 
-- Header: session id, PLAN/BUILD/AUTO mode, message/token estimates (real usage counters).
-- Sessions table, chat transcript (markdown), context panel (mode, todos, tool calls, models).
-- Bottom: prompt loop with slash commands + `@file` attach (file text prepended, capped at 6k chars).
+## TUI (`hcscoder tui [--daemon URL]`)
 
-## Modes
+Session table + transcript + context panel for daemon-attached or local use.
 
-- **PLAN** — read-only: RAG evidence summary, no writes (enforced in `PrimeRuntime.run_task`).
-- **BUILD** — one bounded RLM turn (default 5 steps) + verification + git files-changed refresh.
-- **AUTO** — bounded by `AutoBudget` (turns/tools/subagents/seconds); halts with reason.
+## Non-interactive (headless, fully tested)
 
-## Supporting services
+```powershell
+hcscoder run "..." --mode PLAN     # streaming one-shot
+hcscoder review                    # keep/revert per file (piped stdin works)
+hcscoder commit -m "msg"           # asks for git identity only if repo has none
+hcscoder serve --port 8000         # HTTP+SSE API (/api/health, /api/events/stream)
+hcscoder ask <session> "..."
+hcscoder session new/list/fork/mode/compact/export/archive
+hcscoder term new/run/list/rename/close
+hcscoder perm decide/allow
+hcscoder mcp | hcscoder models | hcscoder doctor
+```
 
-| Concern | Module | Notes |
-|---|---|---|
-| Sessions | `services/session/manager.py` | JSON-persisted, fork/compact/export, survives restart |
-| Permissions | `services/permissions/engine.py` | allow/ask/deny, deny-wins, sensitive-path escalation, session allows |
-| Diff/review | `services/diff/review.py` | git status/changed/diff/revert (safe: never deletes untracked) |
-| Terminals | `services/terminal/sessions.py` | real PowerShell subprocesses, exit/duration logs, persisted metadata |
-| Daemon API | `services/api/server.py` | FastAPI + SSE `/api/events/stream`, polling fallback |
-| API client | `services/api/client.py` | remote (httpx) or in-process fallback — same core path |
-
-## Slash commands
-
-`/help /new /sessions /switch /fork /archive /delete /export /plan /build /auto
-/goal /todo /compact /agents /spawn /context /git /diff /revert /term /terms
-/rag /ingest /mcp /models /doctor /palette /attach /image /stop /quit`
+Headless proofs: `scripts/live_check.py` (live LLM loop, exit 0),
+`scripts/stress_headless.py` (10 rounds, 0 failures), piped REPL/TUI smokes.
 
 ## Verification
 
-`tests/test_v3_workbench.py` (6 tests) + full suite `24 passed`.
-No mock data: token counts are estimated from real message lengths and labeled as estimates.
+`tests/test_hcscoder.py` (REPL helpers, SSE parser, lazy startup, entry points),
+`tests/test_v3_workbench.py`, full suite green — see README table.
+No mock data: token counts are labeled estimates from real message lengths.

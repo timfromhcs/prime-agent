@@ -1,2 +1,2 @@
-# Prime Agent Start Daemon
-& "$PSScriptRoot\prime.ps1" start
+# hcscoder Start Daemon
+& "$PSScriptRoot\hcscoder.ps1" start
