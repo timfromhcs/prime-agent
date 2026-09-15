@@ -1,9 +1,9 @@
-# Prime Agent V3
+# hcscoder
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 **Local-first autonomous agent workbench** — RLM runtime, subagents, RAG, MCP, vision, image
-generation/editing, self-healing, and a session-first workbench UI (TUI + CLI + daemon API sharing one core).
+generation/editing, self-healing, and a session-first workbench UI (interactive REPL, TUI, CLI, daemon API sharing one core).
 
 No cloud required. No chat gimmicks: every subsystem below is backed by the test or diagnostic named next to it.
 
@@ -23,9 +23,10 @@ irm https://raw.githubusercontent.com/timfromhcs/prime-agent/main/install.ps1 | 
 curl -fsSL https://raw.githubusercontent.com/timfromhcs/prime-agent/main/install.sh | bash
 ```
 
-The installer downloads the source archive, creates `.venv`, runs `pip install .`,
-fetches GGUF models (SHA256-verified, ~7.5 GB) + llama.cpp runtimes, adds `prime-agent` to PATH,
-and runs `prime-agent doctor`. Options:
+The installer downloads the source archive, creates `.venv`, runs `pip install .`
+(exposing the `hcscoder` command; `prime-agent` stays as alias), fetches GGUF models
+(SHA256-verified, ~7.5 GB) + llama.cpp runtimes, adds the venv to PATH,
+and runs `hcscoder doctor`. Options:
 
 | Env / flag | Effect |
 |---|---|
@@ -58,16 +59,22 @@ cd prime-agent
 ## Use
 
 ```powershell
-prime-agent tui                 # session-first workbench (PLAN / BUILD / AUTO)
-prime-agent serve --port 8000   # daemon HTTP+SSE API; TUI attaches via --daemon
-prime-agent session new "Title" # sessions: list / fork / archive / compact / export
-prime-agent ask <session> "..." # one bounded task in a session
-prime-agent run "..."           # headless single task
-prime-agent doctor               # full diagnostics (hashes, runtimes, kernel, RAG, MCP)
-prime-agent benchmark            # real tok/s + RAG latency report
+hcscoder                      # interactive REPL (Claude-Code-class UX, streaming)
+hcscoder run "Refactor X"     # one-shot task with live tokens + tool cards
+hcscoder run "..." --mode PLAN# read-only planning
+hcscoder review               # diff review: keep/revert per file
+hcscoder commit -m "msg"      # safe commit (status first, never force)
+hcscoder models               # local model catalog with presence status
+hcscoder serve --port 8000    # daemon HTTP+SSE API; TUI attaches via --daemon
+hcscoder session new "Title"  # sessions: list / fork / archive / compact / export
+hcscoder ask <session> "..."  # one bounded task in a session
+hcscoder doctor               # full diagnostics (hashes, runtimes, kernel, RAG, MCP)
+hcscoder benchmark            # real tok/s + RAG latency report
 ```
 
-TUI slash commands: `/plan /build /auto /agents /context /git /diff /term /rag /ingest /mcp /models /doctor /todo /compact /export /help`.
+REPL slash commands: `/plan /build /auto /diff /review /commit /models /doctor /todo /compact /export /sessions /help`.
+`@path/to/file` embeds file context. Risky prompts trigger an inline approval
+(`once` / `session` / `deny`); the MCP policy engine enforces underneath regardless.
 
 ---
 
@@ -79,8 +86,11 @@ TUI slash commands: `/plan /build /auto /agents /context /git /diff /term /rag /
 | MCP (6 tools) | ✅ verified | `tests/test_mcp.py` |
 | RAG hybrid + rerank | ✅ verified | `tests/test_rag*.py` |
 | Sessions / permissions / modes / daemon API / terminals | ✅ verified | `tests/test_v3_workbench.py` (6 tests) |
+| hcscoder REPL helpers / SSE parser / lazy startup | ✅ verified | `tests/test_hcscoder.py` (6 tests) |
+| CLI startup (`--help`) | ✅ 0.2s | lazy imports (`services/agent/__init__` PEP 562, per-command imports) |
+| Windows cp1252 pipe-safety | ✅ fixed | all CLI output ASCII-safe; found via piped REPL smoke test |
 | Models on disk (SHA256) | ✅ verified | `prime-agent doctor`, `config/models.json` |
-| Full suite | ✅ 24 passed | `pytest tests/` |
+| Full suite | ✅ 30 passed | `pytest tests/` |
 | BUILD/AUTO with live LLM | ⚠️ needs `llama-server` running | PLAN-path tested; LLM loop is real code, not mocked |
 | Linux installer | ⚠️ untested on real Linux | script is straightforward; report issues |
 | Desktop app / cloud build | ❌ not included | out of scope for V3 |

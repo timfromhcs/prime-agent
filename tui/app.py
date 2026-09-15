@@ -31,8 +31,8 @@ HELP = """Slash commands:
   /agents /spawn <role> <task...> /context /git /diff [path] /revert <path>
   /term [command...] /terms /rag <query> /ingest <path> /mcp /models /doctor
   /palette /attach <path> /image <prompt> /quit
-Keys: type to chat • @file reference supported (paste path) • Ctrl+C interrupts (via /stop)
-Modes: PLAN read-only • BUILD executes plan • AUTO bounded autonomous
+Keys: type to chat - @file reference supported (paste path) - Ctrl+C interrupts (via /stop)
+Modes: PLAN read-only - BUILD executes plan - AUTO bounded autonomous
 """
 
 
@@ -54,7 +54,7 @@ class WorkbenchTUI:
         t = Table(title="Sessions", show_lines=False)
         t.add_column("ID", style="cyan"); t.add_column("Title"); t.add_column("Mode"); t.add_column("Status")
         for s in data.get("sessions", [])[:20]:
-            mark = "●" if s["session_id"] == self.session_id else " "
+            mark = "*" if s["session_id"] == self.session_id else " "
             t.add_row(mark + s["session_id"], s["title"][:40], s.get("mode", ""), s.get("status", ""))
         console.print(t)
 
@@ -220,7 +220,7 @@ class WorkbenchTUI:
                 console.print(Panel((res.get("stdout") or "")[-3000] + ("\n[stderr]\n" + res.get("stderr", "")[-1000] if res.get("stderr") else ""),
                                       title=f"exit={res.get('exit_code')} {res.get('duration_s')}s"))
             else:
-                console.print(f"terminal {t.term_id} ({t.name}) — type /term <command>")
+                console.print(f"terminal {t.term_id} ({t.name}) - type /term <command>")
             return True
         if cmd == "/attach" and args:
             self.attachments.append(args[0])
@@ -258,13 +258,13 @@ class WorkbenchTUI:
                     console.print(Markdown((self.client._local.sessions.export(self.session_id) or "")[:5000]))
             return True
         if cmd == "/image" and args:
-            console.print("[yellow]Image runs through the agent loop — send as chat, e.g. 'generate an image of ...'. Direct: prime-agent run.[/yellow]")
+            console.print("[yellow]Image runs through the agent loop - send as chat, e.g. 'generate an image of ...'. Direct: prime-agent run.[/yellow]")
             return True
         console.print(f"[yellow]Unknown command {cmd}. /help for list.[/yellow]")
         return True
 
     def run(self) -> None:
-        console.print(Panel("[bold]PRIME AGENT workbench[/bold] — sessions-first • PLAN/BUILD/AUTO • /help • /palette",
+        console.print(Panel("[bold]PRIME AGENT workbench[/bold] - sessions-first - PLAN/BUILD/AUTO - /help - /palette",
                             border_style="cyan"))
         self.ensure_session()
         self.show_sessions()
@@ -272,7 +272,7 @@ class WorkbenchTUI:
             try:
                 line = Prompt.ask(f"[bold cyan]prime[{self.session_id or '-'}][/bold cyan]").strip()
             except (KeyboardInterrupt, EOFError):
-                console.print("\n[yellow]Bye. Sessions persist — resume with /sessions + /switch.[/yellow]")
+                console.print("\n[yellow]Bye. Sessions persist - resume with /sessions + /switch.[/yellow]")
                 break
             if not line:
                 continue
@@ -292,12 +292,12 @@ class WorkbenchTUI:
             if not self.ensure_session():
                 console.print("[red]No session available.[/red]")
                 continue
-            console.print("[dim]agent running… (long tasks: detach with Ctrl+C in daemon mode; state persists)[/dim]")
+            console.print("[dim]agent running... (long tasks: detach with Ctrl+C in daemon mode; state persists)[/dim]")
             try:
                 res = self.client.run_task(self.session_id, prompt)
             except KeyboardInterrupt:
                 self.client.interrupt(self.session_id)
-                console.print("[yellow]Interrupted — state persisted.[/yellow]")
+                console.print("[yellow]Interrupted - state persisted.[/yellow]")
                 continue
             if res.get("ok"):
                 console.print(Panel(Markdown(res.get("response", "")[:6000]), title="agent", border_style="green"))

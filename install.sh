@@ -52,6 +52,7 @@ fi
 
 # 5. PATH shim
 mkdir -p "$HOME/.local/bin"
+ln -sf "$INSTALL_DIR/.venv/bin/hcscoder" "$HOME/.local/bin/hcscoder"
 ln -sf "$INSTALL_DIR/.venv/bin/prime-agent" "$HOME/.local/bin/prime-agent"
 if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
   echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
@@ -64,5 +65,6 @@ echo "Running diagnostics..."
 
 echo ""
 echo "INSTALL COMPLETE. Try:"
-echo "  prime-agent tui       # workbench"
-echo "  prime-agent --help    # all commands"
+echo "  hcscoder              # interactive REPL"
+echo "  hcscoder run \"<task>\"  # one-shot task with streaming"
+echo "  hcscoder --help       # all commands (prime-agent is an alias)"

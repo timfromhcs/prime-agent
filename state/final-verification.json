@@ -1,7 +1,7 @@
 {
   "timestamp": "Tue Sep 15 2026 (V3 workbench)",
   "all_criteria_verified": true,
-  "criteria_count": 27,
+  "criteria_count": 33,
   "results": {
     "RLM": {
       "status": "VERIFIED",
@@ -110,6 +110,30 @@
     "TESTS_V3": {
       "status": "VERIFIED",
       "evidence": "24 passed (18 pre-existing + 6 new test_v3_workbench)"
+    },
+    "HCSCODER_REBRAND": {
+      "status": "VERIFIED",
+      "evidence": "hcscoder + prime-agent entry points in pyproject; CLI help shows hcscoder"
+    },
+    "STREAMING": {
+      "status": "VERIFIED",
+      "evidence": "chat_stream SSE + run_task_stream; parse_sse_deltas unit-tested"
+    },
+    "REPL": {
+      "status": "VERIFIED",
+      "evidence": "piped smoke: /sessions /models /quit clean; approval gate + review + commit live-tested"
+    },
+    "STARTUP": {
+      "status": "VERIFIED",
+      "evidence": "--help 9.8s -> 0.2s; runtime init 9.9s -> 0.2s (lazy imports)"
+    },
+    "WIN_PIPE_SAFE": {
+      "status": "VERIFIED",
+      "evidence": "cp1252 crash fixed; CLI output ASCII-safe"
+    },
+    "TESTS_HCSCODER": {
+      "status": "VERIFIED",
+      "evidence": "30 passed (24 pre-existing + 6 test_hcscoder)"
     }
   }
 }

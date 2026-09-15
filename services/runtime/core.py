@@ -1,7 +1,7 @@
 """Unified Prime runtime core.
 
 Single ownership point for task/goal/plan/execution/tool/subagent/memory
-state. The FastAPI daemon, the Rich TUI, and the CLI all call PrimeRuntime —
+state. The FastAPI daemon, the Rich TUI, and the CLI all call PrimeRuntime -
 never forked business logic.
 """
 
@@ -10,17 +10,21 @@ from __future__ import annotations
 import asyncio
 import time
 from pathlib import Path
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, List, Optional
 
 from services.agent.memory import AgentMemorySystem
 from services.agent.modes import AutoBudget, ModeRunner, check_auto_budget
-from services.agent.root_agent import PrimeAgent
 from services.diff.review import changed_files, file_diff, full_diff, git_status, revert_file
 from services.permissions.engine import PermissionEngine
-from services.rag.index import HybridRAGIndex
 from services.session.manager import SessionManager
-from services.subagents.manager import SubagentManager
 from services.terminal.sessions import TerminalManager
+
+# Heavy backends (torch/transformers/diffusers) stay lazy - see properties below.
+# They must NEVER be module-level imports here, or `hcscoder --help` pays ~10s.
+if TYPE_CHECKING:
+    from services.agent.root_agent import PrimeAgent
+    from services.rag.index import HybridRAGIndex
+    from services.subagents.manager import SubagentManager
 
 
 class PrimeRuntime:
@@ -31,11 +35,26 @@ class PrimeRuntime:
         self.permissions = PermissionEngine()
         self.terminals = TerminalManager()
         self.memory = AgentMemorySystem()
-        self.rag = HybridRAGIndex()
-        self.subagents = SubagentManager()
+        self._rag: Optional[HybridRAGIndex] = None
+        self._subagents: Optional[SubagentManager] = None
         self._agent: Optional[PrimeAgent] = None
         self._events: List[Dict[str, Any]] = []
         self._cancel: Dict[str, bool] = {}
+
+    @property
+    def rag(self):  # -> HybridRAGIndex (lazy: ~20s embedding weights)
+        # Lazy: sentence-transformer weights take ~20s - never pay at startup.
+        if self._rag is None:
+            from services.rag.index import HybridRAGIndex
+            self._rag = HybridRAGIndex()
+        return self._rag
+
+    @property
+    def subagents(self):  # -> SubagentManager
+        if self._subagents is None:
+            from services.subagents.manager import SubagentManager
+            self._subagents = SubagentManager()
+        return self._subagents
 
     # -- events (normalized event model) --
     def emit(self, etype: str, session_id: str = "", payload: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
@@ -50,8 +69,9 @@ class PrimeRuntime:
         return {"cursor": len(self._events), "events": self._events[cursor:]}
 
     # -- lazy heavy agent --
-    def agent(self) -> PrimeAgent:
+    def agent(self):  # -> PrimeAgent (pulls torch/diffusers transitively)
         if self._agent is None:
+            from services.agent.root_agent import PrimeAgent
             self._agent = PrimeAgent(workspace_root=self.workspace_root)
         return self._agent
 
@@ -78,7 +98,7 @@ class PrimeRuntime:
             # inspect-only: RAG context + no writes
             pack = self.rag.search(prompt, top_k=3)
             cites = [f"[{i.citation}] {i.content[:300]}" for i in pack.items]
-            resp = ("PLAN (read-only) — no files modified.\n\nEvidence:\n" +
+            resp = ("PLAN (read-only) - no files modified.\n\nEvidence:\n" +
                     ("\n".join(f"- {c}" for c in cites) if cites else "- no indexed evidence yet"))
             self.sessions.append_message(session_id, "assistant", resp)
             self.emit("message.completed", session_id, {"mode": "PLAN"})
@@ -168,3 +188,90 @@ class PrimeRuntime:
                 self._agent.shutdown()
         except Exception:
             pass
+
+    # -- streaming run (single core path for hcscoder REPL + run command) --
+    async def run_task_stream(self, session_id: str, prompt: str,
+                              budget: Optional[AutoBudget] = None):
+        """Async generator yielding live event dicts for CLI/TUI rendering.
+
+        Event types: status | delta | tool | done | error.
+        Terminal behavior (persistence, verification, git refresh) matches run_task.
+        """
+        sess = self.sessions.get(session_id)
+        if not sess:
+            yield {"type": "error", "reason": "unknown session"}
+            return
+        budget = budget or AutoBudget()
+        t0 = time.time()
+        self._cancel.pop(session_id, None)
+        self.sessions.append_message(session_id, "user", prompt)
+        self.modes.ensure_plan(session_id)
+        self.emit("message.started", session_id, {"prompt": prompt[:500]})
+
+        mode = (sess.mode or "BUILD").upper()
+        if mode == "PLAN":
+            yield {"type": "status", "text": "PLAN (read-only) - searching evidence..."}
+            pack = self.rag.search(prompt, top_k=3)
+            cites = [f"[{i.citation}] {i.content[:300]}" for i in pack.items]
+            resp = ("PLAN (read-only) - no files modified.\n\nEvidence:\n" +
+                    ("\n".join(f"- {c}" for c in cites) if cites else "- no indexed evidence yet"))
+            for chunk in [resp[i:i + 120] for i in range(0, len(resp), 120)]:
+                yield {"type": "delta", "text": chunk}
+            self.sessions.append_message(session_id, "assistant", resp)
+            self.emit("message.completed", session_id, {"mode": "PLAN"})
+            yield {"type": "done", "mode": "PLAN", "response": resp}
+            return
+
+        agent = self.agent()
+        stop = check_auto_budget(
+            {"turns": sess.usage.get("turns", 0), "tool_calls": sess.usage.get("tool_calls", 0),
+             "subagents": len(sess.subagents)}, budget, 0)
+        if stop:
+            self.sessions.append_message(session_id, "system", f"AUTO halted: {stop}.")
+            yield {"type": "error", "reason": stop}
+            return
+        max_steps = 5 if mode == "BUILD" else min(budget.max_turns, 8)
+        try:
+            self.emit("task.started", session_id, {"mode": mode})
+            yield {"type": "status", "text": f"{mode}: contacting local model..."}
+            turn = None
+            async for ev in agent.execute_task_stream(
+                    prompt, session_id=f"rlm-{session_id}", max_steps=max_steps):
+                if self._cancel.get(session_id):
+                    break
+                if ev["type"] == "delta":
+                    yield ev
+                elif ev["type"] == "tool":
+                    info = ev["info"]
+                    self.emit("tool.started", session_id, info)
+                    yield {"type": "tool", "text": f"* step {info['step']}: kernel_exec - {info['preview'][:100]}"}
+                elif ev["type"] == "done":
+                    turn = ev["turn"]
+            if self._cancel.get(session_id) or turn is None:
+                self.sessions.append_message(session_id, "system", "Interrupted by user; state persisted.")
+                self.emit("task.interrupted", session_id, {})
+                yield {"type": "error", "reason": "interrupted"}
+                return
+            self.sessions.append_message(session_id, "assistant", turn.response,
+                                         {"verification": turn.verification})
+            for a in turn.artifacts_created:
+                s = self.sessions.get(session_id)
+                if s and a not in s.artifacts:
+                    self.sessions.update(session_id, artifacts=s.artifacts + [a])
+            self.sessions.log_tool(session_id, "rlm.execute_task", "completed",
+                                   f"{len(turn.actions_taken)} actions")
+            try:
+                files = [f["path"] for f in changed_files(sess.cwd)]
+                self.sessions.record_files_changed(session_id, files)
+            except Exception:
+                pass
+            self.emit("task.completed", session_id, {"verification": turn.verification})
+            yield {"type": "done", "mode": mode, "response": turn.response,
+                   "actions": turn.actions_taken, "artifacts": turn.artifacts_created,
+                   "verification": turn.verification,
+                   "elapsed_s": round(time.time() - t0, 2)}
+        except Exception as e:
+            self.sessions.append_message(session_id, "system",
+                                         f"WHAT FAILED: agent turn. WHY: {e}. STATE: session persisted.")
+            self.emit("task.failed", session_id, {"error": str(e)[:500]})
+            yield {"type": "error", "reason": str(e)[:500]}

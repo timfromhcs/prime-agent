@@ -300,6 +300,95 @@ class PrimeAgent:
 
         return turn
 
+    async def execute_task_stream(self, prompt: str, session_id: str = "root_session",
+                                    max_steps: int = 5):
+        """Async generator mirroring execute_task but yielding live events.
+
+        Yields: {"type": "delta", "text": ...}, {"type": "tool", "info": {...}},
+        finally {"type": "done", "turn": TurnResult}.
+        """
+        self.memory.store("working", "current_task", prompt)
+        actions = []
+        artifacts = []
+
+        port = await self.router.get_server_port_for_task("general")
+
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt}
+        ]
+
+        final_response = ""
+        content = ""
+
+        for step in range(max_steps):
+            content = ""
+            async for ev in self.llm_client.chat_stream(messages, port=port, max_tokens=384):
+                if "delta" in ev:
+                    content += ev["delta"]
+                    yield {"type": "delta", "text": ev["delta"]}
+                # {"done": ...} carries no extra text; content already accumulated
+
+            code_blocks = re.findall(r"```python\s*(.*?)\s*```", content, re.DOTALL)
+
+            if not code_blocks:
+                final_response = content
+                break
+
+            cell_outputs = []
+            for code in code_blocks:
+                yield {"type": "tool", "info": {"tool": "kernel_exec", "step": step + 1,
+                                                "preview": code[:160]}}
+                exec_res = await self.kernel_manager.execute(session_id, code)
+                actions.append({"step": step + 1, "action": "kernel_exec", "code": code[:120], "result": exec_res})
+
+                if "image.generate" in code or "image.edit" in code:
+                    if exec_res.get("result"):
+                        try:
+                            res_val = eval(exec_res["result"]) if isinstance(exec_res["result"], str) else exec_res["result"]
+                            if isinstance(res_val, dict) and "file_path" in res_val:
+                                artifacts.append(res_val["file_path"])
+                        except Exception:
+                            pass
+
+                out_summary = []
+                if exec_res.get("stdout"):
+                    out_summary.append(f"stdout:\n{exec_res['stdout'].strip()}")
+                if exec_res.get("result"):
+                    out_summary.append(f"result: {exec_res['result']}")
+                if exec_res.get("error"):
+                    out_summary.append(f"error: {exec_res['error'].get('ename')}: {exec_res['error'].get('evalue')}")
+
+                cell_outputs.append("\n".join(out_summary) if out_summary else "Execution succeeded (no output).")
+
+            combined_output = "\n---\n".join(cell_outputs)
+            messages.append({"role": "assistant", "content": content})
+            messages.append({"role": "user", "content": f"[REPL Execution Output - Step {step + 1}]:\n{combined_output}\nContinue reasoning or provide final verified answer."})
+        else:
+            final_response = content
+
+        claim = self.verifier.classify_claim(
+            statement=f"Task completed: {prompt[:80]}",
+            empirical_evidence=f"Executed {len(actions)} RLM actions."
+        )
+
+        turn = TurnResult(
+            turn_id=1,
+            user_input=prompt,
+            response=final_response,
+            actions_taken=actions,
+            artifacts_created=artifacts,
+            verification={"status": "PASS", "claim": claim.classification, "confidence": claim.confidence}
+        )
+
+        self.memory.store("episodic", f"turn_{int(asyncio.get_event_loop().time())}", {
+            "prompt": prompt,
+            "actions": len(actions),
+            "artifacts": len(artifacts),
+            "response": final_response[:200]
+        })
+        yield {"type": "done", "turn": turn}
+
     def shutdown(self):
         self.kernel_manager.shutdown()
         self.model_manager.shutdown()

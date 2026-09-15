@@ -41,6 +41,7 @@ dependencies = [
 ]
 
 [project.scripts]
+hcscoder = "cli:cli"
 prime-agent = "cli:cli"
 
 [tool.setuptools]

@@ -23,18 +23,33 @@ import click
 from rich.console import Console
 from rich.table import Table
 
-from services.agent.root_agent import PrimeAgent
-from services.agent.daemon import PrimeDaemon
-from services.rag.index import HybridRAGIndex
-from services.llm.model_manager import ModelManager
+from rich.console import Console
+from rich.table import Table
 
+# NOTE: heavy service imports (torch/transformers via services.*) are
+# deliberately local to each command — `hcscoder --help` must stay fast.
 console = Console()
 
 
-@click.group()
-def cli():
-    """Prime Agent Local RLM Platform CLI."""
-    pass
+@click.group(invoke_without_command=True)
+@click.option("--cwd", default=".", help="Project working directory / agent scope")
+@click.pass_context
+def cli(ctx, cwd: str):
+    """hcscoder — local-first autonomous agent workbench.
+
+    Run with no subcommand to start the interactive REPL.
+    (prime-agent remains available as an alias entry point.)
+    """
+    ctx.ensure_object(dict)
+    ctx.obj["cwd"] = cwd
+    if ctx.invoked_subcommand is None:
+        from services.runtime.core import PrimeRuntime
+        from services.cli.repl import HCSRepl
+        rt = PrimeRuntime()
+        try:
+            HCSRepl(rt, cwd=cwd).run()
+        finally:
+            rt.shutdown()
 
 
 @cli.command()
@@ -133,6 +148,7 @@ def doctor():
 @cli.command()
 def start():
     """Start the Prime Agent daemon in background."""
+    from services.agent.daemon import PrimeDaemon
     console.print("[green]Starting Prime Agent daemon...[/green]")
     daemon = PrimeDaemon()
     asyncio.run(daemon.start())
@@ -142,6 +158,7 @@ def start():
 @cli.command()
 def stop():
     """Stop the Prime Agent background daemon."""
+    from services.agent.daemon import PrimeDaemon
     console.print("[yellow]Stopping Prime Agent daemon...[/yellow]")
     daemon = PrimeDaemon()
     asyncio.run(daemon.stop())
@@ -151,6 +168,7 @@ def stop():
 @cli.command()
 def status():
     """Display running status and session health."""
+    from services.agent.daemon import PrimeDaemon
     daemon = PrimeDaemon()
     st = daemon.get_status()
     console.print("\n[bold cyan]=== PRIME AGENT DAEMON STATUS ===[/bold cyan]")
@@ -162,21 +180,49 @@ def status():
 
 @cli.command()
 @click.argument("task")
-def run(task: str):
-    """Execute a single task autonomously."""
-    console.print(f"\n[bold green]Running task:[/bold green] {task}\n")
-    agent = PrimeAgent()
+@click.option("--session-id", default="", help="Existing session (default: create one)")
+@click.option("--mode", default="BUILD", type=click.Choice(["PLAN", "BUILD", "AUTO"], case_sensitive=False))
+@click.option("--cwd", default=".")
+def run(task: str, session_id: str, mode: str, cwd: str):
+    """Execute a task with live streaming output (like Claude Code)."""
+    import asyncio as _a
+    from rich.markdown import Markdown as _Md
+    from services.agent.modes import AutoBudget as _AB
+    from services.runtime.core import PrimeRuntime
+    rt = PrimeRuntime()
     try:
-        result = asyncio.run(agent.execute_task(task))
-        console.print("[bold cyan]Agent Output:[/bold cyan]")
-        console.print(result.response)
-        if result.artifacts_created:
-            console.print("\n[bold yellow]Artifacts Created:[/bold yellow]")
-            for a in result.artifacts_created:
-                console.print(f"  - {a}")
-        console.print(f"\n[bold green]Verification Status:[/bold green] {result.verification}\n")
+        if not session_id:
+            s = rt.sessions.create(title=task[:60], cwd=cwd, goal=task, mode=mode)
+            session_id = s.session_id
+            console.print(f"[dim]session {session_id} [{mode}][/dim]")
+        else:
+            rt.modes.set_mode(session_id, mode)
+
+        async def _go():
+            buf: list = []
+            async for ev in rt.run_task_stream(session_id, task, budget=_AB()):
+                t = ev.get("type")
+                if t == "status":
+                    console.print(f"[dim]› {ev.get('text')}[/dim]")
+                elif t == "delta":
+                    buf.append(ev.get("text", ""))
+                    console.print(ev.get("text", ""), end="")
+                elif t == "tool":
+                    console.print(f"\n[dim]{ev.get('text')}[/dim]")
+                elif t == "done":
+                    console.print()
+                    console.print(_Md((ev.get("response") or "")[:6000]))
+                    console.print(f"[green]done in {ev.get('elapsed_s')}s[/green] "
+                                  f"[dim]verification: {ev.get('verification')}[/dim]")
+                elif t == "error":
+                    console.print(f"\n[red]Failed: {ev.get('reason')}[/red]")
+        try:
+            _a.run(_go())
+        except KeyboardInterrupt:
+            rt.interrupt(session_id)
+            console.print("\n[yellow]Interrupted — state persisted.[/yellow]")
     finally:
-        agent.shutdown()
+        rt.shutdown()
 
 
 @cli.command()
@@ -219,6 +265,7 @@ def rag():
 @click.argument("path")
 def rag_ingest(path: str):
     """Ingest a file or directory into RAG."""
+    from services.rag.index import HybridRAGIndex
     console.print(f"[cyan]Ingesting: {path}...[/cyan]")
     idx = HybridRAGIndex()
     if os.path.isdir(path):
@@ -233,6 +280,7 @@ def rag_ingest(path: str):
 @click.argument("query")
 def rag_search(query: str):
     """Search the hybrid RAG index."""
+    from services.rag.index import HybridRAGIndex
     console.print(f"[cyan]Searching for: '{query}'...[/cyan]\n")
     idx = HybridRAGIndex()
     pack = idx.search(query, top_k=3)
@@ -269,7 +317,8 @@ def benchmark():
 
         # 2. Benchmark RAG Search
         console.print("[yellow]Benchmarking RAG Retrieval...[/yellow]")
-        idx = HybridRAGIndex()
+        from services.rag.index import HybridRAGIndex as _HRAG
+        idx = _HRAG()
         t0 = time.time()
         pack = idx.search("Prime Agent architecture", top_k=3)
         rag_latency = (time.time() - t0) * 1000
@@ -322,6 +371,8 @@ def optimize():
 @cli.command()
 def shutdown():
     """Gracefully shutdown all background processes, servers, and sessions."""
+    from services.agent.daemon import PrimeDaemon
+    from services.llm.model_manager import ModelManager
     console.print("[bold red]Shutting down Prime Agent Platform...[/bold red]")
     mgr = ModelManager()
     mgr.shutdown()
@@ -534,6 +585,54 @@ def image_cmd(prompt: str, edit: str, steps: int):
     else:
         res = _a.run(svc.generate_image(prompt=prompt, steps=steps))
     console.print(res)
+
+
+@cli.command(name="review")
+@click.option("--session-id", default="")
+@click.option("--cwd", default=".")
+def review_cmd(session_id: str, cwd: str):
+    """Interactive diff review: keep or revert per file."""
+    from services.runtime.core import PrimeRuntime
+    from services.cli.repl import HCSRepl
+    rt = PrimeRuntime()
+    try:
+        repl = HCSRepl(rt, cwd=cwd)
+        if session_id:
+            repl.session_id = session_id
+        repl.ensure_session()
+        repl.cmd_review()
+    finally:
+        rt.shutdown()
+
+
+@cli.command(name="commit")
+@click.option("-m", "--message", default="")
+@click.option("--cwd", default=".")
+def commit_cmd(message: str, cwd: str):
+    """Safe git commit (shows status first, never force-pushes)."""
+    from services.runtime.core import PrimeRuntime
+    from services.cli.repl import HCSRepl
+    rt = PrimeRuntime()
+    try:
+        HCSRepl(rt, cwd=cwd).cmd_commit(message)
+    finally:
+        rt.shutdown()
+
+
+@cli.command(name="models")
+def models_cmd():
+    """Show local model catalog with real presence status."""
+    import json as _j
+    cfg = _j.loads(Path("config/models.json").read_text(encoding="utf-8"))
+    table = Table(title="hcscoder models")
+    table.add_column("Role", style="cyan"); table.add_column("Model")
+    table.add_column("Quant"); table.add_column("Status")
+    for role, m in cfg.items():
+        p = m.get("path", "")
+        ok = Path(p).exists() if p else True
+        table.add_row(role, m.get("name", ""), m.get("quantization", "embed"),
+                      "[green]installed[/green]" if ok else "[red]missing[/red]")
+    console.print(table)
 
 
 if __name__ == "__main__":
