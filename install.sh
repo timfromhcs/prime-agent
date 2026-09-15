@@ -53,10 +53,15 @@ if [[ "$SKIP_LLAMACPP" != "1" ]]; then
   "$INSTALL_DIR/.venv/bin/python" "$INSTALL_DIR/scripts/fetch_binaries.py" --llamacpp --repo-root "$INSTALL_DIR"
 fi
 
-# 5. PATH shim
+# 5. PATH shim + PRIME_HOME (resource anchor for the installed CLI)
 mkdir -p "$HOME/.local/bin"
 ln -sf "$INSTALL_DIR/.venv/bin/hcscoder" "$HOME/.local/bin/hcscoder"
 ln -sf "$INSTALL_DIR/.venv/bin/prime-agent" "$HOME/.local/bin/prime-agent"
+export PRIME_HOME="$INSTALL_DIR"
+if ! grep -q 'PRIME_HOME' "$HOME/.bashrc" 2>/dev/null; then
+  echo "export PRIME_HOME=\"$INSTALL_DIR\"" >> "$HOME/.bashrc"
+  echo "[OK] PRIME_HOME=$INSTALL_DIR (persisted in ~/.bashrc)"
+fi
 if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
   echo 'export PATH="$HOME/.local/bin:$PATH"' >> "$HOME/.bashrc"
   echo "[OK] Added ~/.local/bin to PATH (restart shell or: export PATH=\"\$HOME/.local/bin:\$PATH\")"

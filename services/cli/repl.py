@@ -76,9 +76,10 @@ def needs_approval(prompt: str) -> Optional[str]:
 
 
 class HCSRepl:
-    def __init__(self, runtime, cwd: str = "."):
+    def __init__(self, runtime, cwd: str = ".", file_base: str = ""):
         self.rt = runtime
         self.cwd = cwd
+        self.file_base = file_base or cwd  # @file refs resolve here (invocation dir)
         self.console = Console()
         self.session_id: Optional[str] = None
         self.perms = PermissionEngine()
@@ -300,7 +301,7 @@ class HCSRepl:
                 if not self.handle_slash(cmd, args):
                     break
                 continue
-            prompt, embedded = expand_file_refs(line, self.cwd)
+            prompt, embedded = expand_file_refs(line, self.file_base)
             for e in embedded:
                 self.console.print(f"[dim]attached: {e}[/dim]")
             self.run_streaming(prompt)

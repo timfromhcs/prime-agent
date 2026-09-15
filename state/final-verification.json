@@ -1,7 +1,7 @@
 {
   "timestamp": "Tue Sep 15 2026 (V3 workbench)",
   "all_criteria_verified": true,
-  "criteria_count": 45,
+  "criteria_count": 48,
   "results": {
     "RLM": {
       "status": "VERIFIED",
@@ -182,6 +182,18 @@
     "TESTS_36": {
       "status": "VERIFIED",
       "evidence": "36 passed"
+    },
+    "PRIME_HOME": {
+      "status": "VERIFIED",
+      "evidence": "user-reported doctor FAILs from foreign CWD fixed: services/paths.py anchor + per-command user-path resolution + sandbox default cwd-based; doctor green from C:/ with PRIME_HOME; unit-tested"
+    },
+    "INSTALLER_IEX": {
+      "status": "VERIFIED",
+      "evidence": "backslash-quote parse bug fixed; ScriptBlock parse OK; full local install (wheel prime-agent 3.1.0) + hcscoder --help/version from fresh venv"
+    },
+    "TESTS_38": {
+      "status": "VERIFIED",
+      "evidence": "38 passed"
     }
   }
 }

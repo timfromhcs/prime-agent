@@ -82,3 +82,29 @@ def test_extract_code_blocks_tolerates_truncation():
     truncated = "prose ```python\nmcp.write_file('a', 'b'"
     assert extract_code_blocks(truncated) == ["mcp.write_file('a', 'b'"]
     assert extract_code_blocks("just prose, no code") == []
+
+
+def test_find_app_home_priority(tmp_path, monkeypatch):
+    from services import paths as P
+    home = tmp_path / "home"
+    (home / "config").mkdir(parents=True)
+    (home / "config" / "models.json").write_text("{}", encoding="utf-8")
+    src = tmp_path / "src"
+    src.mkdir()
+    cli_py = src / "cli.py"
+    cli_py.write_text("x", encoding="utf-8")
+    monkeypatch.setenv("PRIME_HOME", str(home))
+    assert P.find_app_home(str(cli_py), str(tmp_path)) == home.resolve()
+    monkeypatch.delenv("PRIME_HOME")
+    (src / "config").mkdir()
+    (src / "config" / "models.json").write_text("{}", encoding="utf-8")
+    assert P.find_app_home(str(cli_py), str(tmp_path)) == src.resolve()
+    assert P.find_app_home("/nonexistent/cli.py", str(tmp_path)) == tmp_path.resolve()
+
+
+def test_resolve_user_path(tmp_path):
+    from services.paths import resolve_user_path
+    assert resolve_user_path(".", str(tmp_path)) == str(tmp_path.resolve())
+    assert resolve_user_path("sub", str(tmp_path)).endswith("sub")
+    abs_p = str((tmp_path / "f.txt").resolve())
+    assert resolve_user_path(abs_p, "/elsewhere") == abs_p

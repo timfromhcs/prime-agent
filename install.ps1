@@ -62,13 +62,16 @@ if (-not $SkipLlamaCpp) {
   & $VenvPy "$InstallDir\scripts\fetch_binaries.py" --llamacpp --repo-root $InstallDir
 }
 
-# 5. User PATH: prime-agent console script
+# 5. User PATH + PRIME_HOME (resource anchor for the installed CLI)
 $ScriptsDir = "$InstallDir\.venv\Scripts"
 $UserPath = [Environment]::GetEnvironmentVariable("Path", "User")
 if ($UserPath -notlike "*$ScriptsDir*") {
   [Environment]::SetEnvironmentVariable("Path", "$UserPath;$ScriptsDir", "User")
   Write-Host "[OK] Added to user PATH (new terminals): $ScriptsDir" -ForegroundColor Green
 }
+[Environment]::SetEnvironmentVariable("PRIME_HOME", $InstallDir, "User")
+$env:PRIME_HOME = $InstallDir
+Write-Host "[OK] PRIME_HOME=$InstallDir" -ForegroundColor Green
 
 # 6. Verify
 if (-not $SkipDoctor) {

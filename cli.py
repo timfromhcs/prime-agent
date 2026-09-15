@@ -32,6 +32,14 @@ from rich.table import Table
 console = Console()
 
 
+def _r(ctx, p: str) -> str:
+    """Resolve a user-given path against the invocation directory."""
+    try:
+        return ctx.obj["resolve"](p)
+    except Exception:
+        return p
+
+
 @click.group(invoke_without_command=True)
 @click.option("--cwd", default=".", help="Project working directory / agent scope")
 @click.pass_context
@@ -41,14 +49,22 @@ def cli(ctx, cwd: str):
     Run with no subcommand to start the interactive REPL.
     (prime-agent remains available as an alias entry point.)
     """
+    import os as _os
+    from services.paths import find_app_home, resolve_user_path
     ctx.ensure_object(dict)
+    orig_cwd = _os.getcwd()
+    app_home = find_app_home(__file__, orig_cwd)
+    _os.chdir(app_home)  # internal resources (config/models/data) anchor here
     ctx.obj["cwd"] = cwd
+    ctx.obj["orig_cwd"] = orig_cwd
+    ctx.obj["app_home"] = str(app_home)
+    ctx.obj["resolve"] = lambda p: resolve_user_path(p, orig_cwd)
     if ctx.invoked_subcommand is None:
         from services.runtime.core import PrimeRuntime
         from services.cli.repl import HCSRepl
         rt = PrimeRuntime()
         try:
-            HCSRepl(rt, cwd=cwd).run()
+            HCSRepl(rt, cwd=ctx.obj["resolve"](cwd), file_base=orig_cwd).run()
         finally:
             rt.shutdown()
 
@@ -59,6 +75,7 @@ def doctor():
     console.print("\n[bold cyan]=== hcscoder doctor ===[/bold cyan]\n")
 
     results = []
+    results.append(("App Home", str(Path(".").resolve()), (Path("config/models.json").exists())))
 
     # 1. OS & Hardware
     import psutil, platform
@@ -144,7 +161,10 @@ def doctor():
     if all_pass:
         console.print("\n[bold green]ALL SUBSYSTEMS VERIFIED OPERATIONAL.[/bold green]\n")
     else:
-        console.print("\n[bold red]SOME SUBSYSTEMS REQUIRE ATTENTION.[/bold red]\n")
+        console.print("\n[bold red]SOME SUBSYSTEMS REQUIRE ATTENTION.[/bold red]")
+        if not Path("config/models.json").exists():
+            console.print("[yellow]Hint: resources resolve via $PRIME_HOME (set by the installer) "
+                          "or the directory containing cli.py. Current dir has no config/models.json.[/yellow]\n")
 
 
 @cli.command()
@@ -185,12 +205,14 @@ def status():
 @click.option("--session-id", default="", help="Existing session (default: create one)")
 @click.option("--mode", default="BUILD", type=click.Choice(["PLAN", "BUILD", "AUTO"], case_sensitive=False))
 @click.option("--cwd", default=".")
-def run(task: str, session_id: str, mode: str, cwd: str):
+@click.pass_context
+def run(ctx, task: str, session_id: str, mode: str, cwd: str):
     """Execute a task with live streaming output (like Claude Code)."""
     import asyncio as _a
     from rich.markdown import Markdown as _Md
     from services.agent.modes import AutoBudget as _AB
     from services.runtime.core import PrimeRuntime
+    cwd = _r(ctx, cwd)
     rt = PrimeRuntime()
     try:
         if not session_id:
@@ -265,9 +287,11 @@ def rag():
 
 @rag.command(name="ingest")
 @click.argument("path")
-def rag_ingest(path: str):
+@click.pass_context
+def rag_ingest(ctx, path: str):
     """Ingest a file or directory into RAG."""
     from services.rag.index import HybridRAGIndex
+    path = _r(ctx, path)
     console.print(f"[cyan]Ingesting: {path}...[/cyan]")
     idx = HybridRAGIndex()
     if os.path.isdir(path):
@@ -395,13 +419,14 @@ def shutdown():
 @cli.command(name="tui")
 @click.option("--daemon", default="", help="Daemon URL, e.g. http://127.0.0.1:8000 (empty=local runtime)")
 @click.option("--cwd", default=".", help="Working directory / project scope")
-def tui_cmd(daemon: str, cwd: str):
+@click.pass_context
+def tui_cmd(ctx, daemon: str, cwd: str):
     """Launch the Prime Agent workbench TUI (sessions-first, PLAN/BUILD/AUTO)."""
     import os as _os
     from services.api.client import PrimeClient
     from tui.app import WorkbenchTUI
     client = PrimeClient(base_url=daemon or _os.environ.get("PRIME_DAEMON", ""))
-    WorkbenchTUI(client, cwd=cwd).run()
+    WorkbenchTUI(client, cwd=_r(ctx, cwd)).run()
 
 
 @cli.command(name="serve")
@@ -427,9 +452,10 @@ def session_grp():
 @click.option("--cwd", default=".")
 @click.option("--goal", default="")
 @click.option("--mode", default="BUILD", type=click.Choice(["PLAN", "BUILD", "AUTO"], case_sensitive=False))
-def session_new(title: str, cwd: str, goal: str, mode: str):
+@click.pass_context
+def session_new(ctx, title: str, cwd: str, goal: str, mode: str):
     from services.session.manager import SessionManager
-    s = SessionManager().create(title=title, cwd=cwd, goal=goal, mode=mode)
+    s = SessionManager().create(title=title, cwd=_r(ctx, cwd), goal=goal, mode=mode)
     console.print(f"[green]Session:[/green] {s.session_id}  mode={s.mode}  cwd={s.cwd}")
 
 
@@ -512,18 +538,21 @@ def diff_grp():
 
 @diff_grp.command(name="list")
 @click.option("--cwd", default=".")
-def diff_list(cwd: str):
+@click.pass_context
+def diff_list(ctx, cwd: str):
     from services.diff.review import changed_files
-    for f in changed_files(cwd):
+    for f in changed_files(_r(ctx, cwd)):
         console.print(f"{f['status']:>4}  {f['path']}")
 
 
 @diff_grp.command(name="show")
 @click.argument("path", required=False)
 @click.option("--cwd", default=".")
-def diff_show(path: str, cwd: str):
+@click.pass_context
+def diff_show(ctx, path: str, cwd: str):
     from rich.syntax import Syntax as _Syn
     from services.diff.review import file_diff, full_diff
+    cwd = _r(ctx, cwd)
     d = full_diff(cwd) if not path else (file_diff(cwd, path).get("diff", ""))
     console.print(_Syn(d[:20000] or "(no diff)", "diff"))
 
@@ -531,9 +560,10 @@ def diff_show(path: str, cwd: str):
 @diff_grp.command(name="revert")
 @click.argument("path")
 @click.option("--cwd", default=".")
-def diff_revert(path: str, cwd: str):
+@click.pass_context
+def diff_revert(ctx, path: str, cwd: str):
     from services.diff.review import revert_file
-    console.print(revert_file(cwd, path))
+    console.print(revert_file(_r(ctx, cwd), path))
 
 
 @cli.group(name="term")
@@ -544,9 +574,10 @@ def term_grp():
 @term_grp.command(name="new")
 @click.option("--name", default="Terminal 1")
 @click.option("--cwd", default=".")
-def term_new(name: str, cwd: str):
+@click.pass_context
+def term_new(ctx, name: str, cwd: str):
     from services.terminal.sessions import TerminalManager
-    t = TerminalManager().create(name=name, cwd=cwd)
+    t = TerminalManager().create(name=name, cwd=_r(ctx, cwd))
     console.print(f"[green]{t.term_id}[/green] {t.name} shell={t.shell}")
 
 
@@ -616,13 +647,14 @@ def perm_allow(scope: str, pattern: str, action: str):
 @click.argument("prompt")
 @click.option("--edit", default="", help="Source image path for image-to-image edit")
 @click.option("--steps", default=15, type=int)
-def image_cmd(prompt: str, edit: str, steps: int):
+@click.pass_context
+def image_cmd(ctx, prompt: str, edit: str, steps: int):
     """Image generation / editing through the real diffusion backend."""
     import asyncio as _a
     from services.image.pipeline import ImageService
     svc = ImageService(model_path="models/image/tiny-sd")
     if edit:
-        res = _a.run(svc.edit_image(prompt=prompt, image_path=edit, steps=steps))
+        res = _a.run(svc.edit_image(prompt=prompt, image_path=_r(ctx, edit), steps=steps))
     else:
         res = _a.run(svc.generate_image(prompt=prompt, steps=steps))
     console.print(res)
@@ -631,13 +663,14 @@ def image_cmd(prompt: str, edit: str, steps: int):
 @cli.command(name="review")
 @click.option("--session-id", default="")
 @click.option("--cwd", default=".")
-def review_cmd(session_id: str, cwd: str):
+@click.pass_context
+def review_cmd(ctx, session_id: str, cwd: str):
     """Interactive diff review: keep or revert per file."""
     from services.runtime.core import PrimeRuntime
     from services.cli.repl import HCSRepl
     rt = PrimeRuntime()
     try:
-        repl = HCSRepl(rt, cwd=cwd)
+        repl = HCSRepl(rt, cwd=_r(ctx, cwd), file_base=ctx.obj["orig_cwd"])
         if session_id:
             repl.session_id = session_id
         repl.ensure_session()
@@ -649,13 +682,14 @@ def review_cmd(session_id: str, cwd: str):
 @cli.command(name="commit")
 @click.option("-m", "--message", default="")
 @click.option("--cwd", default=".")
-def commit_cmd(message: str, cwd: str):
+@click.pass_context
+def commit_cmd(ctx, message: str, cwd: str):
     """Safe git commit (shows status first, never force-pushes)."""
     from services.runtime.core import PrimeRuntime
     from services.cli.repl import HCSRepl
     rt = PrimeRuntime()
     try:
-        HCSRepl(rt, cwd=cwd).cmd_commit(message)
+        HCSRepl(rt, cwd=_r(ctx, cwd)).cmd_commit(message)
     finally:
         rt.shutdown()
 

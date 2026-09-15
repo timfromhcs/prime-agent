@@ -8,6 +8,7 @@ never forked business logic.
 from __future__ import annotations
 
 import asyncio
+import os
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, AsyncIterator, Dict, List, Optional
@@ -28,7 +29,8 @@ if TYPE_CHECKING:
 
 
 class PrimeRuntime:
-    def __init__(self, workspace_root: str = "E:/HCS Chat"):
+    def __init__(self, workspace_root: str = ""):
+        self.workspace_root = workspace_root or os.getcwd()
         self.workspace_root = workspace_root
         self.sessions = SessionManager()
         self.modes = ModeRunner(self.sessions)

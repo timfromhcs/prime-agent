@@ -22,9 +22,10 @@ class ToolSecurityPolicy:
         sandbox_roots: Optional[List[str]] = None,
         audit_log_path: str = "logs/mcp_audit.log"
     ):
+        extra = [p for p in os.environ.get("PRIME_SANDBOX_EXTRA", "").split(os.pathsep) if p.strip()]
         self.sandbox_roots = [
             str(Path(r).resolve())
-            for r in (sandbox_roots or ["E:/HCS Chat", "data/artifacts", "logs"])
+            for r in (sandbox_roots or [os.getcwd(), "data/artifacts", "logs"] + extra)
         ]
         self.audit_log_path = Path(audit_log_path)
         self.audit_log_path.parent.mkdir(parents=True, exist_ok=True)
