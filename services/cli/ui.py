@@ -25,7 +25,7 @@ class StreamBuffer:
     On finish, returns the full text for final markdown rendering.
     """
 
-    def __init__(self, console: Console, refresh_per_second: int = 8):
+    def __init__(self, console: Console, refresh_per_second: int = 4):
         self.console = console
         self.parts: List[str] = []
         self.length = 0
@@ -44,7 +44,7 @@ class StreamBuffer:
         self.parts.append(delta)
         self.length += len(delta)
         if self._started:
-            self._live.update(Text("".join(self.parts)[-4000:]))
+            self._live.update(Text("".join(self.parts)[-2000:]))
 
     def pause(self) -> None:
         if self._started:

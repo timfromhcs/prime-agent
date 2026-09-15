@@ -79,30 +79,36 @@ def join_continuation(lines: List[str]) -> str:
 
 def read_multiline(prompt: str = "hcscoder> ",
                    cont_prompt: str = "... ",
-                   source: Optional[Iterable[str]] = None) -> Optional[str]:
+                   source: Optional[Iterable[str]] = None,
+                   console=None) -> Optional[str]:
     """Read (possibly multi-line) input. Returns None on EOF/interrupt-abort.
 
-    Raises KeyboardInterrupt to the caller for Ctrl+C handling.
+    Markup in `prompt` is rendered via rich when reading from a real terminal
+    (plain input() would print the markup literally). Raises KeyboardInterrupt
+    to the caller for Ctrl+C handling.
     """
     it: Optional[Iterator[str]] = iter(source) if source is not None else None
 
-    def _read(p: str) -> Optional[str]:
+    def _read(p: str, styled: bool) -> Optional[str]:
         if it is not None:
             try:
                 return next(it)
             except StopIteration:
                 return None
         try:
+            if styled and console is not None:
+                console.print(p, end="")
+                return input()
             return input(p)
         except EOFError:
             return None
 
-    first = _read(prompt)
+    first = _read(prompt, styled=True)
     if first is None:
         return None
     lines = [first]
     while needs_continuation("\n".join(lines)):
-        nxt = _read(cont_prompt)
+        nxt = _read(cont_prompt, styled=False)
         if nxt is None:
             break
         lines.append(nxt)

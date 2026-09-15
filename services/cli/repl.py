@@ -152,7 +152,7 @@ class HCSRepl:
             self.perms.allow_session_pattern(self.session_id, "*")
         return True
 
-    # -- streaming run with live UX --
+    # -- streaming run with live UX (spinner until first output, then Live) --
     def run_streaming(self, prompt: str) -> None:
         if not self.ensure_session():
             self.console.print("[red]No session available.[/red]")
@@ -160,24 +160,38 @@ class HCSRepl:
         if not self.approval_gate(prompt):
             return
         stream = self.ui.new_stream()
+        live_on = False
+        spin = self.ui.thinking("Agent working...")
+        status = spin.__enter__()
         t_start = time.time()
+
+        def _first_output():
+            nonlocal live_on
+            if not live_on:
+                live_on = True
+                status.stop()
+                stream.start()
 
         async def _drain():
             async for ev in self.rt.run_task_stream(self.session_id, prompt):
                 t = ev.get("type")
                 if t == "status":
+                    _first_output()
                     stream.pause()
                     self.ui.status_line(ev.get("text", ""))
                     stream.resume()
                 elif t == "delta":
+                    _first_output()
                     stream.append(ev.get("text", ""))
                 elif t == "tool":
+                    _first_output()
                     stream.pause()
                     self.console.print()
                     self.ui.tool_card("tool", ev.get("text", ""), state="running",
                                       elapsed_s=time.time() - t_start)
                     stream.resume()
                 elif t == "done":
+                    _first_output()
                     full = stream.finish()
                     self.console.print()
                     self.ui.final(ev.get("response") or full, ok=True,
@@ -189,14 +203,16 @@ class HCSRepl:
                     self.ui.error_card(ev.get("reason", "unknown"))
 
         try:
-            with self.ui.thinking("Agent working..."):
-                stream.start()
-                asyncio.run(_drain())
+            asyncio.run(_drain())
         except KeyboardInterrupt:
-            stream.finish()
             self.rt.interrupt(self.session_id)
             self.console.print("\n[yellow]Interrupted - state persisted.[/yellow]")
-            return
+        finally:
+            try:
+                status.stop()
+            except Exception:
+                pass
+            stream.finish()
         self.console.print(self.footer())
 
     # -- review / commit --
@@ -316,7 +332,8 @@ class HCSRepl:
         self.console.print(self.footer())
         while True:
             try:
-                line = read_multiline("[bold cyan]hcscoder>[/bold cyan] ")
+                line = read_multiline("[bold cyan]hcscoder>[/bold cyan] ",
+                                      console=self.console)
             except KeyboardInterrupt:
                 self.console.print("\n[dim]Sessions persist - resume anytime. Bye.[/dim]")
                 break

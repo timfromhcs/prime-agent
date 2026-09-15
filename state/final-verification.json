@@ -1,7 +1,7 @@
 {
   "timestamp": "Tue Sep 15 2026 (V3 workbench)",
   "all_criteria_verified": true,
-  "criteria_count": 63,
+  "criteria_count": 65,
   "results": {
     "RLM": {
       "status": "VERIFIED",
@@ -254,6 +254,14 @@
     "RAG_INDEX_CLEAN": {
       "status": "VERIFIED",
       "evidence": "rebuilt from 17 real docs (175 chunks, 0 pytest-tmp pollution); test_rag_quality isolated to tmp index; suite leaves index clean"
+    },
+    "UI_SMOOTH": {
+      "status": "VERIFIED",
+      "evidence": "spinner/Live disentangled (spinner stops at first output), Live 4Hz/2000 chars, rendered prompt via console.print, fake-runtime streaming tests green"
+    },
+    "TESTS_47": {
+      "status": "VERIFIED",
+      "evidence": "47 passed"
     }
   }
 }

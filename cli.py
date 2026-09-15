@@ -228,30 +228,45 @@ def run(ctx, task: str, session_id: str, mode: str, cwd: str):
             from services.cli.ui import Renderer as _R
             ui = _R(console)
             stream = ui.new_stream()
-            stream.start()
-            async for ev in rt.run_task_stream(session_id, task, budget=_AB()):
-                t = ev.get("type")
-                if t == "status":
-                    stream.pause()
-                    ui.status_line(ev.get("text", ""))
-                    stream.resume()
-                elif t == "delta":
-                    stream.append(ev.get("text", ""))
-                elif t == "tool":
-                    stream.pause()
-                    console.print()
-                    ui.tool_card("tool", ev.get("text", ""), state="running")
-                    stream.resume()
-                elif t == "done":
-                    full = stream.finish()
-                    console.print()
-                    ui.final(ev.get("response") or full, ok=True,
-                             elapsed=str(ev.get("elapsed_s", "?")),
-                             verification=ev.get("verification"),
-                             artifacts=ev.get("artifacts"))
-                elif t == "error":
-                    stream.finish()
-                    ui.error_card(ev.get("reason", "unknown"))
+            live_on = False
+            spin = ui.thinking("Agent working...")
+            status = spin.__enter__()
+            try:
+                async for ev in rt.run_task_stream(session_id, task, budget=_AB()):
+                    t = ev.get("type")
+                    if t in ("status", "delta", "tool") and not live_on:
+                        live_on = True
+                        status.stop()
+                        stream.start()
+                    if t == "status":
+                        stream.pause()
+                        ui.status_line(ev.get("text", ""))
+                        stream.resume()
+                    elif t == "delta":
+                        stream.append(ev.get("text", ""))
+                    elif t == "tool":
+                        stream.pause()
+                        console.print()
+                        ui.tool_card("tool", ev.get("text", ""), state="running")
+                        stream.resume()
+                    elif t == "done":
+                        if not live_on:
+                            status.stop()
+                        full = stream.finish()
+                        console.print()
+                        ui.final(ev.get("response") or full, ok=True,
+                                 elapsed=str(ev.get("elapsed_s", "?")),
+                                 verification=ev.get("verification"),
+                                 artifacts=ev.get("artifacts"))
+                    elif t == "error":
+                        stream.finish()
+                        ui.error_card(ev.get("reason", "unknown"))
+            finally:
+                try:
+                    status.stop()
+                except Exception:
+                    pass
+                stream.finish()
         try:
             _a.run(_go())
         except KeyboardInterrupt:

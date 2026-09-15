@@ -165,3 +165,61 @@ def test_ui_renders_ascii_safe():
         src = _io.open(fn, encoding="utf-8").read()
         bad = sorted({ch for ch in src if ord(ch) > 127})
         assert bad == [], (fn, bad)
+
+
+class _FakeSessions:
+    def __init__(self, mgr):
+        self._mgr = mgr
+
+    def __getattr__(self, name):
+        return getattr(self._mgr, name)
+
+
+class _FakeRuntime:
+    def __init__(self, tmp_path):
+        from services.session.manager import SessionManager
+        self.sessions = SessionManager(sessions_dir=str(tmp_path / "s"))
+        self.interrupted = []
+
+    async def run_task_stream(self, session_id, prompt):
+        yield {"type": "status", "text": "working"}
+        yield {"type": "delta", "text": "hello "}
+        yield {"type": "delta", "text": "streamed"}
+        yield {"type": "tool", "text": "x = 1"}
+        yield {"type": "done", "response": "hello streamed",
+               "elapsed_s": 0.1, "verification": {"status": "PASS"},
+               "artifacts": []}
+
+    def interrupt(self, session_id):
+        self.interrupted.append(session_id)
+        return {"ok": True}
+
+
+def test_repl_streaming_pipeline_headless(tmp_path):
+    from rich.console import Console as _C
+    from services.cli.repl import HCSRepl
+    rt = _FakeRuntime(tmp_path)
+    repl = HCSRepl(rt, cwd=str(tmp_path))
+    repl.console = _C(record=True, width=100)
+    repl.ui = __import__("services.cli.ui", fromlist=["Renderer"]).Renderer(repl.console)
+    repl.run_streaming("safe test prompt")
+    out = repl.console.export_text()
+    assert "hello streamed" in out
+    assert "verification" in out
+    assert "session sess_" in out
+    assert rt.interrupted == []
+
+
+def test_repl_streaming_error_path(tmp_path):
+    from rich.console import Console as _C
+    from services.cli.repl import HCSRepl
+
+    class _ErrRt(_FakeRuntime):
+        async def run_task_stream(self, session_id, prompt):
+            yield {"type": "error", "reason": "boom-test"}
+
+    repl = HCSRepl(_ErrRt(tmp_path), cwd=str(tmp_path))
+    repl.console = _C(record=True, width=100)
+    repl.ui = __import__("services.cli.ui", fromlist=["Renderer"]).Renderer(repl.console)
+    repl.run_streaming("safe test prompt")
+    assert "boom-test" in repl.console.export_text()
