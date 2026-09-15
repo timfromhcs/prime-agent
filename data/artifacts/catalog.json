@@ -162,5 +162,46 @@
       "strength": 0.5,
       "steps": 4
     }
+  },
+  "img_c6af4b92": {
+    "artifact_id": "img_c6af4b92",
+    "file_path": "E:\\HCS Chat\\data\\artifacts\\img_c6af4b92.png",
+    "file_name": "img_c6af4b92.png",
+    "format": "PNG",
+    "size_bytes": 23477,
+    "sha256": "5b84a224d6d4d73bc0786dbe652486fde7c7af3c5cb681a8260c9e660eaa9fb7",
+    "created_at": "2026-09-15T18:43:29.899908+00:00",
+    "model": "tiny-sd",
+    "prompt": "a red square icon",
+    "producer_agent": "ImageAgent",
+    "task_id": "task_gen",
+    "qa_status": "PASS",
+    "qa_notes": "Structural verification passed: valid resolution and rich contrast.",
+    "metadata": {
+      "steps": 4,
+      "guidance_scale": 7.5,
+      "width": 128,
+      "height": 128
+    }
+  },
+  "img_ce9d0bd7": {
+    "artifact_id": "img_ce9d0bd7",
+    "file_path": "E:\\HCS Chat\\data\\artifacts\\img_ce9d0bd7.png",
+    "file_name": "img_ce9d0bd7.png",
+    "format": "PNG",
+    "size_bytes": 24688,
+    "sha256": "ef33eb36c373151362af3bf58c4bd29d82e74fcaccac2937ea67e9303640d689",
+    "created_at": "2026-09-15T18:43:42.192617+00:00",
+    "model": "tiny-sd-img2img",
+    "prompt": "a blue square icon",
+    "producer_agent": "ImageAgent",
+    "task_id": "task_edit",
+    "qa_status": "PASS",
+    "qa_notes": "Structural verification passed: valid resolution and rich contrast.",
+    "metadata": {
+      "parent_image": "E:\\HCS Chat\\data\\artifacts\\img_c6af4b92.png",
+      "strength": 0.6,
+      "steps": 4
+    }
   }
 }

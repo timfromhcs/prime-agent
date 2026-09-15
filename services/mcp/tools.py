@@ -65,6 +65,13 @@ class MCPToolRegistry:
             "required": ["command"]
         })
 
+        # Web tool (fetch-only, no search engine, no JS)
+        self.register("web_fetch", self._tool_web_fetch, "Fetch an http(s) URL as title+text", {
+            "type": "object",
+            "properties": {"url": {"type": "string", "description": "http(s) URL to fetch"}},
+            "required": ["url"]
+        })
+
     def register(self, name: str, fn: Any, description: str, schema: Dict[str, Any]):
         self.tools[name] = {
             "name": name,
@@ -147,6 +154,10 @@ class MCPToolRegistry:
             "exit_code": res.exit_code,
             "timed_out": res.timed_out
         }
+
+    def _tool_web_fetch(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        from services.webutils.fetch import fetch_url
+        return fetch_url(args["url"])
 
     def get_tool_definitions(self) -> List[Dict[str, Any]]:
         return [

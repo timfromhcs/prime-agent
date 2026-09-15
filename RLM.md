@@ -17,7 +17,9 @@ The Recursive Language Modeling (RLM) Kernel in Prime Agent provides a stateful,
    - `rag.search(query, top_k)`
    - `image.generate(prompt, ...)`
    - `image.edit(prompt, image_path, ...)`
-   - `mcp.call(server, tool, **args)`
+   - `image.describe(image_path, prompt?)` (local VLM, starts vision model)
+   - `mcp.call(server, tool, **args)` (tools: read/write/list, git, shell, web_fetch)
+   - `web.fetch(url)` (fetch-only HTTP(S), no search engine)
 4. **Reversible Snapshots & Checkpoints**: Complete state can be captured as an immutable snapshot using `dill` and rolled back if subsequent steps introduce errors or instability.
 5. **Hard Resource Isolation**: Uses native Windows Job Objects (`kernel32.dll`) to enforce hard memory and CPU limits and guarantee that child processes are completely terminated.
 

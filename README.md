@@ -3,7 +3,9 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 **Local-first autonomous agent workbench.** RLM runtime with persistent Python kernel,
-subagents, hybrid RAG, MCP tools, vision, local image generation/editing, self-healing —
+verified tool surface (shell/files/git/RAG/**fetch-only web**/subagents/skills),
+hybrid RAG, MCP tools, **vision (local VLM)**, local image generation/editing with QA,
+self-healing —
 driven through an interactive streaming REPL, a TUI, a CLI, and a daemon HTTP+SSE API
 that all share one backend core. No cloud required.
 
@@ -56,7 +58,7 @@ hcscoder serve --port 8000    # daemon API: /api/health, /api/sessions, /api/eve
 hcscoder session new "Title"  # + list/fork/mode/compact/export/archive
 hcscoder term new/run/list/rename/close   # real PowerShell sessions
 hcscoder perm decide/allow    # allow/ask/deny engine
-hcscoder mcp                  # 6 registered tools | hcscoder rag search "..."
+hcscoder mcp                  # 7 registered tools | hcscoder rag search "..."
 hcscoder doctor               # full diagnostics | hcscoder benchmark | hcscoder optimize
 ```
 
@@ -73,7 +75,11 @@ enforced read-only; AUTO mode is bounded (turn/tool/subagent/time budgets).
 | Subsystem | Status | Evidence |
 |---|---|---|
 | RLM persistent kernel | ✅ | `test_rlm_kernel.py` (42 → 84 across cells) |
-| MCP (6 tools) | ✅ | `test_mcp.py` |
+| MCP (7 tools) | ✅ | `test_mcp.py` + `hcscoder mcp` (incl. `web_fetch`) |
+| Agent tool surface (bridges + prompt honesty) | ✅ | `test_agent_surface.py`: all 14 ops route, prompt documents only real APIs |
+| Subagents live (spawn → LLM → COMPLETED → collect) | ✅ | `scripts/live_subagents.py` exit 0 (fixed shared-process `chdir` bug on the way) |
+| Vision live (VLM describes fixture correctly, 18 s load) | ✅ | `scripts/live_multimodal.py` — "blue square with red PRIME VISION text" |
+| Diffusion live (gen + edit + QA PASS, CPU ~183 s) | ✅ | `scripts/live_multimodal.py` — artifacts `img_c6af4b92`/`img_ce9d0bd7` with SHA256 |
 | RAG hybrid + rerank | ✅ | `test_rag*.py`; live p50 8 ms (`stress_headless.py`) |
 | Sessions / permissions / modes / API / terminals | ✅ | `test_v3_workbench.py` |
 | REPL / SSE parser / lazy startup / entry points | ✅ | `test_hcscoder.py` (8 tests) |
@@ -85,7 +91,7 @@ enforced read-only; AUTO mode is bounded (turn/tool/subagent/time budgets).
 | Headless stress (10 rounds parallel sessions/RAG/terminals) | ✅ 0 failures | `scripts/stress_headless.py` |
 | Every CLI command headless incl. serve+health | ✅ | bug-loop 2026-09-15 (review/commit/REPL/TUI piped, exit 0) |
 | Models on disk (SHA256) | ✅ | `hcscoder doctor` → ALL SUBSYSTEMS VERIFIED |
-| Full suite | ✅ **42 passed** | `pytest tests/` |
+| Full suite | ✅ **45 passed** | `pytest tests/` |
 | Linux installer | tested in WSL Ubuntu 22.04 | venv + full pip install + symlinks + `hcscoder --help` green; found+fixed `PYTHON_BIN` auto-detect bug; models/llama via documented skip flags |
 | BUILD/AUTO long-horizon tasks | proven within budgets | phased scaffold→test→repair converges; ~1–2 min/step on local 4B |
 | Desktop app | ❌ out of scope (by decision) | CLI UX is the product: streaming REPL, review/commit, approvals, hcscoder branding |

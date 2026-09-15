@@ -123,15 +123,20 @@ class SubagentManager:
             # 1. Isolated REPL execution if kernel_manager provided
             if kernel_manager:
                 repl = kernel_manager.get_or_create_session(subagent_id)
-                # Seed workspace directory in REPL
-                init_code = f"import os; os.chdir(r'{handle.session_dir}')\nsubagent_id = '{subagent_id}'\n"
+                # Seed workspace directory WITHOUT os.chdir: the REPL shares
+                # this process, and chdir would break host relative paths
+                # (logs, configs, models). Convention: use SUBAGENT_DIR.
+                init_code = (
+                    f"import os\nSUBAGENT_DIR = r'{handle.session_dir}'\n"
+                    f"subagent_id = '{subagent_id}'\n"
+                )
                 await repl.execute(init_code)
 
             # 2. LLM reasoning step if client and router provided
             if llm_client and router:
                 port = await router.get_server_port_for_task(handle.role)
                 messages = [
-                    {"role": "system", "content": f"{role_prompt}\nYou are working in session directory: {handle.session_dir}\nProduce concrete findings and code if requested."},
+                    {"role": "system", "content": f"{role_prompt}\nYour isolated workspace is: {handle.session_dir}\nWrite files with absolute paths under SUBAGENT_DIR.\nProduce concrete findings and code if requested."},
                     {"role": "user", "content": prompt}
                 ]
                 resp = await llm_client.chat(messages, port=port, max_tokens=256)

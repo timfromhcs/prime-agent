@@ -189,7 +189,9 @@ class ModelManager:
         projector_path = model_info.get("projector_path")
         args, draft_path = self._build_args(role, port, bin_path, model_path, backend, projector_path)
 
-        log_file = self.logs_dir / f"llama_server_{role}_{port}.log"
+        log_dir = Path("logs")
+        log_dir.mkdir(parents=True, exist_ok=True)
+        log_file = log_dir / f"llama_server_{role}_{port}.log"
         log_fp = open(log_file, "wb", buffering=0)
 
         print(f"[ModelManager] profile: {self.active_profile}")

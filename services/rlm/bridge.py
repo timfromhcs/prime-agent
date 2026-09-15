@@ -22,6 +22,15 @@ from typing import Any, Callable, Dict, List, Optional
 from services.rlm.bash import bash
 
 
+async def _dispatch(handler: Callable[[Dict[str, Any]], Any], payload: Dict[str, Any]) -> Any:
+    """Call any handler shape (async/sync function, bound method, callable
+    object) and await the result iff awaitable."""
+    res = handler(payload)
+    if asyncio.iscoroutine(res) or asyncio.isfuture(res):
+        return await res
+    return res
+
+
 class HarnessBridge:
     def __init__(self, rlm_bridge: RlmBridge):
         self._rlm = rlm_bridge
@@ -60,9 +69,7 @@ class RlmBridge:
         if not self._handler:
             raise RuntimeError("RLM host bridge handler not connected.")
         payload = {"op": op, **kwargs}
-        if asyncio.iscoroutinefunction(self._handler):
-            return await self._handler(payload)
-        return self._handler(payload)
+        return await _dispatch(self._handler, payload)
 
     async def spawn(self, prompt: str, name: Optional[str] = None, role: str = "general", **kwargs) -> Dict[str, Any]:
         """Spawns a child subagent asynchronously."""
@@ -101,9 +108,7 @@ class RagBridge:
         if not self._handler:
             raise RuntimeError("RAG host bridge handler not connected.")
         payload = {"op": op, **kwargs}
-        if asyncio.iscoroutinefunction(self._handler):
-            return await self._handler(payload)
-        return self._handler(payload)
+        return await _dispatch(self._handler, payload)
 
     async def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """Performs hybrid vector+lexical RAG search and reranking."""
@@ -125,9 +130,7 @@ class ImageBridge:
         if not self._handler:
             raise RuntimeError("Image host bridge handler not connected.")
         payload = {"op": op, **kwargs}
-        if asyncio.iscoroutinefunction(self._handler):
-            return await self._handler(payload)
-        return self._handler(payload)
+        return await _dispatch(self._handler, payload)
 
     async def generate(self, prompt: str, steps: int = 15, guidance: float = 7.5, **kwargs) -> Dict[str, Any]:
         """Generates an image artifact headlessly from text."""
@@ -137,9 +140,33 @@ class ImageBridge:
         """Edits an existing image artifact headlessly via image-to-image."""
         return await self._request("image_edit", prompt=prompt, image_path=image_path, strength=strength, steps=steps, **kwargs)
 
+    async def describe(self, image_path: str, prompt: str = "Describe this image in detail.") -> Dict[str, Any]:
+        """Describes an image via the local vision model (starts the VLM server)."""
+        return await self._request("image_describe", image_path=image_path, prompt=prompt)
+
+
+class WebBridge:
+    """Fetch-only web access (no search engine, no JS)."""
+
+    def __init__(self, host_handler=None):
+        self._handler = host_handler
+
+    def set_handler(self, handler):
+        self._handler = handler
+
+    async def _request(self, op, **kwargs):
+        if not self._handler:
+            raise RuntimeError("Web host bridge handler not connected.")
+        payload = {"op": op, **kwargs}
+        return await _dispatch(self._handler, payload)
+
+    async def fetch(self, url: str):
+        """Fetch an http(s) URL, return {url, status, title, text}."""
+        return await self._request("web_fetch", url=url)
+
 
 class McpBridge:
-    def __init__(self, host_handler: Optional[Callable[[Dict[str, Any]], Any]] = None):
+    def __init__(self, host_handler=None):
         self._handler = host_handler
 
     def set_handler(self, handler: Callable[[Dict[str, Any]], Any]):
@@ -149,9 +176,7 @@ class McpBridge:
         if not self._handler:
             raise RuntimeError("MCP host bridge handler not connected.")
         payload = {"op": op, **kwargs}
-        if asyncio.iscoroutinefunction(self._handler):
-            return await self._handler(payload)
-        return self._handler(payload)
+        return await _dispatch(self._handler, payload)
 
     async def call(self, server: str, tool: str, **args) -> Dict[str, Any]:
         """Executes a tool on a registered MCP server through security policy."""

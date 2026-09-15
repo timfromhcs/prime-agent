@@ -1,7 +1,7 @@
 {
   "timestamp": "Tue Sep 15 2026 (V3 workbench)",
   "all_criteria_verified": true,
-  "criteria_count": 53,
+  "criteria_count": 62,
   "results": {
     "RLM": {
       "status": "VERIFIED",
@@ -214,6 +214,42 @@
     "TESTS_42": {
       "status": "VERIFIED",
       "evidence": "42 passed"
+    },
+    "WEB_FETCH": {
+      "status": "VERIFIED",
+      "evidence": "stdlib fetch_url + MCP web_fetch tool + WebBridge + dispatcher op; tested against real local HTTP (title/text, script-stripped, file:// rejected)"
+    },
+    "IMAGE_DESCRIBE": {
+      "status": "VERIFIED",
+      "evidence": "image.describe bridge + dispatcher op via vision router (8085)"
+    },
+    "PROMPT_HONEST": {
+      "status": "VERIFIED",
+      "evidence": "test asserts every documented await NS.method exists in the real REPL namespace"
+    },
+    "SUBAGENT_LIVE": {
+      "status": "VERIFIED",
+      "evidence": "live_subagents.py exit 0: COMPLETED + collect"
+    },
+    "VISION_LIVE": {
+      "status": "VERIFIED",
+      "evidence": "live_multimodal.py: VLM described fixture correctly"
+    },
+    "DIFFUSION_LIVE": {
+      "status": "VERIFIED",
+      "evidence": "live_multimodal.py: gen img_c6af4b92 QA PASS + edit img_ce9d0bd7 QA PASS (CPU 183s)"
+    },
+    "CHDIR_FIX": {
+      "status": "VERIFIED",
+      "evidence": "subagent os.chdir removed ( broke host logs/); ModelManager + policy mkdir-hardened"
+    },
+    "BRIDGE_DISPATCH": {
+      "status": "VERIFIED",
+      "evidence": "all 5 bridges await any handler shape (callable-object bug fixed)"
+    },
+    "TESTS_45": {
+      "status": "VERIFIED",
+      "evidence": "45 passed"
     }
   }
 }

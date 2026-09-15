@@ -21,7 +21,7 @@ from typing import Any, Dict, Optional
 import dill
 
 from services.rlm.bash import bash
-from services.rlm.bridge import RlmBridge, RagBridge, ImageBridge, McpBridge
+from services.rlm.bridge import RlmBridge, RagBridge, ImageBridge, McpBridge, WebBridge
 
 
 class ReplSession:
@@ -34,6 +34,7 @@ class ReplSession:
         self.rag = RagBridge(host_handler)
         self.image = ImageBridge(host_handler)
         self.mcp = McpBridge(host_handler)
+        self.web = WebBridge(host_handler)
 
         self.namespace: Dict[str, Any] = {
             "__name__": "__main__",
@@ -45,6 +46,7 @@ class ReplSession:
             "rag": self.rag,
             "image": self.image,
             "mcp": self.mcp,
+            "web": self.web,
             "json": json,
             "os": os,
             "sys": sys
@@ -57,6 +59,7 @@ class ReplSession:
         self.rag.set_handler(handler)
         self.image.set_handler(handler)
         self.mcp.set_handler(handler)
+        self.web.set_handler(handler)
 
     async def execute(self, code: str, max_output_chars: int = 32768) -> Dict[str, Any]:
         """Executes a code snippet with top-level await in the persistent namespace."""
@@ -156,7 +159,7 @@ class ReplSession:
         state_dict = {}
 
         skip_keys = {
-            "__builtins__", "asyncio", "bash", "rlm", "rag", "image", "mcp",
+            "__builtins__", "asyncio", "bash", "rlm", "rag", "image", "mcp", "web",
             "json", "os", "sys", "_", "__name__", "__doc__"
         }
 
@@ -206,7 +209,7 @@ class ReplSession:
     def list_names(self) -> List[str]:
         """Lists user-defined variable names currently in namespace."""
         skip_keys = {
-            "__builtins__", "asyncio", "bash", "rlm", "rag", "image", "mcp",
+            "__builtins__", "asyncio", "bash", "rlm", "rag", "image", "mcp", "web",
             "json", "os", "sys", "_", "__name__", "__doc__"
         }
         return [k for k in self.namespace.keys() if not k.startswith("_") and k not in skip_keys]

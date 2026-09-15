@@ -27,17 +27,18 @@ To prevent unauthorized access, prompt injection, and host compromise, every too
 
 ## 2. Registered MCP Tools
 
-The `MCPToolRegistry` provides the following native tools:
+The `MCPToolRegistry` provides the following native tools (verified via
+`hcscoder mcp` + `tests/test_mcp.py`):
 
 | Tool Name | Parameters | Description |
 | :--- | :--- | :--- |
-| `read_file` | `path: str` | Reads file content with UTF-8 encoding and boundary verification |
-| `write_file` | `path: str, content: str` | Writes or overwrites a file inside the sandboxed workspace |
-| `list_directory` | `path: str` | Lists files, directories, sizes, and timestamps within an allowed path |
-| `execute_bash` | `command: str, cwd: str` | Executes a shell command inside the workspace with timeout protection |
-| `execute_python` | `code: str` | Runs sandboxed Python code in the persistent RLM kernel |
-| `git_status` | `cwd: str` | Inspects working tree status, modified files, and current branch |
-| `rag_search` | `query: str, top_k: int` | Performs hybrid semantic/sparse search across indexed project documents |
+| `read_file` | `path, start_line?, end_line?` | Reads file content inside the sandbox |
+| `write_file` | `path, content` | Writes a file inside the sandbox (creates parents) |
+| `list_dir` | `path` | Lists directory entries with sizes |
+| `git_status` | — | Working-tree status of the project |
+| `git_diff` | — | Uncommitted diff of the project |
+| `shell_exec` | `command, timeout?=60` | Runs a shell command, captures exit/stdout/stderr |
+| `web_fetch` | `url` | Fetch-only http(s) retrieval as title+text (capped, no JS, no search engine) |
 
 ---
 

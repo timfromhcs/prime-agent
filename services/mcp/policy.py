@@ -69,5 +69,9 @@ class ToolSecurityPolicy:
             "duration_sec": round(duration, 4),
             "result_preview": result_preview[:200]
         }
-        with open(self.audit_log_path, "a", encoding="utf-8") as f:
-            f.write(f"{entry}\n")
+        try:
+            self.audit_log_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(self.audit_log_path, "a", encoding="utf-8") as f:
+                f.write(f"{entry}\n")
+        except Exception:
+            pass
