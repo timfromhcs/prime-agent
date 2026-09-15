@@ -1,7 +1,7 @@
 {
   "timestamp": "Tue Sep 15 2026 (V3 workbench)",
   "all_criteria_verified": true,
-  "criteria_count": 65,
+  "criteria_count": 67,
   "results": {
     "RLM": {
       "status": "VERIFIED",
@@ -262,6 +262,14 @@
     "TESTS_47": {
       "status": "VERIFIED",
       "evidence": "47 passed"
+    },
+    "BUDGET_COUNTS_TURNS": {
+      "status": "VERIFIED",
+      "evidence": "user session bricked after ~4 msgs reproduced as message-counted budget; agent_turns accounting + reset + /budget; 1300-msg scenario proven executable; halt message actionable"
+    },
+    "TESTS_49": {
+      "status": "VERIFIED",
+      "evidence": "49 passed"
     }
   }
 }

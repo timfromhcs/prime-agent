@@ -109,11 +109,12 @@ class PrimeRuntime:
         # BUILD / AUTO: delegate one bounded agent turn through the real RLM loop
         agent = self.agent()
         stop = check_auto_budget(
-            {"turns": sess.usage.get("turns", 0), "tool_calls": sess.usage.get("tool_calls", 0),
+            {"agent_turns": sess.usage.get("agent_turns", 0), "tool_calls": sess.usage.get("tool_calls", 0),
              "subagents": len(sess.subagents)}, budget, 0)
         if stop:
             self.sessions.append_message(session_id, "system", f"AUTO halted: {stop}.")
-            return {"ok": False, "reason": stop}
+            return {"ok": False, "reason": stop + " Use /budget to inspect or /budget reset to continue."}
+        self.sessions.count_agent_turn(session_id)
         max_steps = 8 if mode == "BUILD" else min(budget.max_turns, 8)
         try:
             self.emit("task.started", session_id, {"mode": mode})
@@ -229,12 +230,13 @@ class PrimeRuntime:
 
         agent = self.agent()
         stop = check_auto_budget(
-            {"turns": sess.usage.get("turns", 0), "tool_calls": sess.usage.get("tool_calls", 0),
+            {"agent_turns": sess.usage.get("agent_turns", 0), "tool_calls": sess.usage.get("tool_calls", 0),
              "subagents": len(sess.subagents)}, budget, 0)
         if stop:
             self.sessions.append_message(session_id, "system", f"AUTO halted: {stop}.")
-            yield {"type": "error", "reason": stop}
+            yield {"type": "error", "reason": stop + " Use /budget to inspect or /budget reset to continue."}
             return
+        self.sessions.count_agent_turn(session_id)
         max_steps = 8 if mode == "BUILD" else min(budget.max_turns, 8)
         try:
             self.emit("task.started", session_id, {"mode": mode})

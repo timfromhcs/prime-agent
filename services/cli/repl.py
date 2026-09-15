@@ -47,8 +47,8 @@ HELP = """[bold]Slash commands[/bold]
   /review            approve/revert files /commit [-m msg]    safe git commit
   /models            model catalog        /doctor            diagnostics
   /compact           compact context      /export            markdown export
-  /paste             multiline paste      /clear             clear screen
-  /quit              exit
+  /budget [reset]    show/reset budgets /paste             multiline paste
+  /clear             clear screen         /quit              exit
 [dim]@path/to/file embeds file context
 multiline: trailing \\ continues, unclosed brackets keep reading, /paste ends with `.`
 Ctrl+C interrupts a run[/dim]"""
@@ -313,6 +313,20 @@ class HCSRepl:
         elif cmd == "compact":
             if self.ensure_session():
                 self.console.print({"ok": self.rt.sessions.compact(self.session_id)})
+        elif cmd == "budget":
+            if self.ensure_session():
+                from services.agent.modes import AutoBudget as _AB
+                s = self.rt.sessions.get(self.session_id)
+                u = s.usage if s else {}
+                b = _AB()
+                self.console.print(
+                    f"agent_turns {u.get('agent_turns', 0)}/{b.max_turns} * "
+                    f"tool_calls {u.get('tool_calls', 0)}/{b.max_tool_calls} * "
+                    f"subagents {len(s.subagents) if s else 0}/{b.max_subagents} * "
+                    f"messages {len(s.messages) if s else 0}")
+                if args and args[0] == "reset":
+                    self.rt.sessions.reset_budget(self.session_id)
+                    self.console.print("[green]budget reset (messages kept)[/green]")
         elif cmd == "export":
             if self.ensure_session():
                 self.console.print(Markdown((self.rt.sessions.export(self.session_id) or "")[:4000]))

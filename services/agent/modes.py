@@ -44,8 +44,9 @@ def build_plan_from_goal(goal: str, files_hint: Optional[List[str]] = None) -> L
 
 
 def check_auto_budget(usage: Dict[str, Any], budget: AutoBudget, elapsed_s: float) -> Optional[str]:
-    if usage.get("turns", 0) >= budget.max_turns:
-        return "turn budget exhausted"
+    if usage.get("agent_turns", 0) >= budget.max_turns:
+        return "turn budget exhausted (used %d of %d agent turns; /budget to inspect, /budget reset to continue)" % (
+            usage.get("agent_turns", 0), budget.max_turns)
     if usage.get("tool_calls", 0) >= budget.max_tool_calls:
         return "tool budget exhausted"
     if usage.get("subagents", 0) >= budget.max_subagents:

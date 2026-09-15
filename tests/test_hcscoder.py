@@ -223,3 +223,31 @@ def test_repl_streaming_error_path(tmp_path):
     repl.ui = __import__("services.cli.ui", fromlist=["Renderer"]).Renderer(repl.console)
     repl.run_streaming("safe test prompt")
     assert "boom-test" in repl.console.export_text()
+
+
+def test_agent_turn_budget_counts_executions_not_messages(tmp_path):
+    from services.session.manager import SessionManager
+    sm = SessionManager(sessions_dir=str(tmp_path / "s"))
+    s = sm.create(title="t", cwd=".", mode="AUTO")
+    for _ in range(50):
+        sm.append_message(s.session_id, "user", "x")
+    sess = sm.get(s.session_id)
+    assert sess.usage.get("agent_turns", 0) == 0
+    assert sm.count_agent_turn(s.session_id) is True
+    assert sm.get(s.session_id).usage["agent_turns"] == 1
+    assert sm.reset_budget(s.session_id) is True
+    assert sm.get(s.session_id).usage["agent_turns"] == 0
+
+
+def test_budget_slash_shows_and_resets(tmp_path):
+    from rich.console import Console as _C
+    from services.cli.repl import HCSRepl
+    repl = HCSRepl(_FakeRuntime(tmp_path), cwd=str(tmp_path))
+    repl.console = _C(record=True, width=100)
+    repl.ensure_session()
+    assert repl.handle_slash("budget", []) is True
+    out = repl.console.export_text()
+    assert "agent_turns 0/8" in out
+    repl.rt.sessions.count_agent_turn(repl.session_id)
+    assert repl.handle_slash("budget", ["reset"]) is True
+    assert "budget reset" in repl.console.export_text()

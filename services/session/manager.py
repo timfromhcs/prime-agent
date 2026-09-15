@@ -129,7 +129,7 @@ class SessionManager:
             cwd=cwd_abs, branch=_git_branch(cwd_abs),
             goal=goal, mode=mode.upper() if mode.upper() in ("PLAN", "BUILD", "AUTO") else "BUILD",
             status="active",
-            usage={"turns": 0, "tool_calls": 0, "tokens_est": 0},
+            usage={"agent_turns": 0, "tool_calls": 0, "tokens_est": 0},
             created_at=ts, updated_at=ts,
         )
         self._write(sess)
@@ -199,8 +199,29 @@ class SessionManager:
             return False
         sess.messages.append({"role": role, "content": content,
                               "at": _now(), **(meta or {})})
-        sess.usage["turns"] = sess.usage.get("turns", 0) + 1
+        # NOTE: message count is NOT the agent-turn count. Budgets are enforced
+        # on real agent executions via count_agent_turn() (see below), so long
+        # chats or pasted text can never brick a session by themselves.
         sess.usage["tokens_est"] = sess.usage.get("tokens_est", 0) + max(1, len(content) // 4)
+        self._write(sess)
+        return True
+
+    def count_agent_turn(self, session_id: str) -> bool:
+        """Record one executed agent turn for budget accounting."""
+        sess = self.get(session_id)
+        if not sess:
+            return False
+        sess.usage["agent_turns"] = sess.usage.get("agent_turns", 0) + 1
+        self._write(sess)
+        return True
+
+    def reset_budget(self, session_id: str) -> bool:
+        """Zero turn/tool counters (messages and evidence are kept)."""
+        sess = self.get(session_id)
+        if not sess:
+            return False
+        sess.usage["agent_turns"] = 0
+        sess.usage["tool_calls"] = 0
         self._write(sess)
         return True
 

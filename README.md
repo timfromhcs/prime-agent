@@ -91,9 +91,9 @@ enforced read-only; AUTO mode is bounded (turn/tool/subagent/time budgets).
 | Headless stress (10 rounds parallel sessions/RAG/terminals) | ✅ 0 failures | `scripts/stress_headless.py` |
 | Every CLI command headless incl. serve+health | ✅ | bug-loop 2026-09-15 (review/commit/REPL/TUI piped, exit 0) |
 | Models on disk (SHA256) | ✅ | `hcscoder doctor` → ALL SUBSYSTEMS VERIFIED |
-| Full suite | ✅ **45 passed** | `pytest tests/` |
+| Full suite | ✅ **49 passed** | `pytest tests/` |
 | Linux installer | tested in WSL Ubuntu 22.04 | venv + full pip install + symlinks + `hcscoder --help` green; found+fixed `PYTHON_BIN` auto-detect bug; models/llama via documented skip flags |
-| BUILD/AUTO long-horizon tasks | proven within budgets | phased scaffold→test→repair converges; ~1–2 min/step on local 4B |
+| BUILD/AUTO long-horizon tasks | proven within budgets | phased scaffold→test→repair converges; ~1–2 min/step on local 4B; budgets count agent turns (never messages), `/budget` + `/budget reset` recover |
 | Desktop app | ❌ out of scope (by decision) | CLI UX is the product: streaming REPL, review/commit, approvals, hcscoder branding |
 
 ---

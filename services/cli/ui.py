@@ -118,9 +118,14 @@ class Renderer:
             self.console.print(f"[dim]artifacts: {artifacts}[/dim]")
 
     def error_card(self, reason: str) -> None:
+        hint = ""
+        if "budget" in reason:
+            hint = "\nNEXT: /budget to inspect, /budget reset to continue, /compact to trim history"
+        else:
+            hint = "\nNEXT: refine prompt or /compact, then retry"
         self.console.print(Panel(
             f"WHAT FAILED: agent turn\nWHY: {reason}\n"
-            f"STATE: session persisted\nNEXT: refine prompt or /compact, then retry",
+            f"STATE: session persisted{hint}",
             title="error", border_style="red"))
 
     def new_stream(self) -> StreamBuffer:

@@ -48,9 +48,12 @@ def test_permissions_sensitive_and_deny():
 
 
 def test_modes_and_budget():
-    assert check_auto_budget({"turns": 99}, AutoBudget(max_turns=8), 0) == "turn budget exhausted"
-    assert check_auto_budget({"turns": 0}, AutoBudget(), 99999) == "time budget exhausted"
-    assert check_auto_budget({"turns": 0, "tool_calls": 0, "subagents": 0}, AutoBudget(), 1) is None
+    over = check_auto_budget({"agent_turns": 99}, AutoBudget(max_turns=8), 0)
+    assert over is not None and "turn budget exhausted" in over
+    assert check_auto_budget({"agent_turns": 0}, AutoBudget(), 99999) == "time budget exhausted"
+    assert check_auto_budget({"agent_turns": 0, "tool_calls": 0, "subagents": 0}, AutoBudget(), 1) is None
+    # messages alone must never exhaust the turn budget (regression: bricked sessions)
+    assert check_auto_budget({"agent_turns": 0, "messages": 1300}, AutoBudget(), 1) is None
 
 
 def test_terminal_real_exec(tmp_path):
