@@ -173,7 +173,11 @@ class ModelManager:
         self.free_port(port)
         model_info = self.models_cfg.get(role)
         if not model_info:
-            raise ValueError(f"Unknown model role: {role}")
+            raise ValueError(
+                f"Unknown model role: {role}. No model catalog loaded — "
+                f"looked in {Path(self.config_dir).resolve()}. Fix: set $PRIME_HOME "
+                f"to your install dir (or reinstall via the one-liner), open a NEW "
+                f"terminal, and run `hcscoder doctor`.")
 
         model_path = model_info["path"]
         backend = self.server_cfg.get("backend", "vulkan")

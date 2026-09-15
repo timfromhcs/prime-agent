@@ -1,7 +1,7 @@
 {
   "timestamp": "Tue Sep 15 2026 (V3 workbench)",
   "all_criteria_verified": true,
-  "criteria_count": 48,
+  "criteria_count": 50,
   "results": {
     "RLM": {
       "status": "VERIFIED",
@@ -194,6 +194,14 @@
     "TESTS_38": {
       "status": "VERIFIED",
       "evidence": "38 passed"
+    },
+    "TASK_FAILURE_DIAGNOSED": {
+      "status": "VERIFIED",
+      "evidence": "user Unknown model role reproduced as missing PRIME_HOME on old install (models present, env empty); venv-relative auto-detect added + proven against real install dir; ModelManager error now actionable"
+    },
+    "TESTS_39": {
+      "status": "VERIFIED",
+      "evidence": "39 passed"
     }
   }
 }

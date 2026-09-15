@@ -5,8 +5,10 @@ the INSTALLATION directory, never to the caller's working directory.
 
 Priority:
   1. $PRIME_HOME (set by the installer), if it contains config/models.json
-  2. Directory of the cli entry point (repo/dev checkout), if valid
-  3. Current working directory (fallback; doctor reports missing resources)
+  2. Interpreter-relative: <sys.prefix>/.. (i.e. <install>/.venv -> <install>),
+     so installed entry points work even without the env var
+  3. Directory of the cli entry point (repo/dev checkout), if valid
+  4. Current working directory (fallback; doctor reports missing resources)
 
 User-supplied paths (--cwd, ingest paths, @file refs) are resolved against the
 ORIGINAL working directory before the process anchors to the app home.
@@ -15,6 +17,7 @@ ORIGINAL working directory before the process anchors to the app home.
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
 MARKER = Path("config/models.json")
@@ -24,6 +27,16 @@ def find_app_home(cli_file: str = "", orig_cwd: str = "") -> Path:
     env = os.environ.get("PRIME_HOME", "").strip().strip('"').strip("'")
     if env and (Path(env) / MARKER).exists():
         return Path(env).resolve()
+    prefix = Path(getattr(sys, "prefix", "") or "")
+    if prefix.name.lower() in ("venv", ".venv", "env", ".env"):
+        cand = prefix.parent
+    else:
+        cand = prefix / ".."
+    try:
+        if (cand.resolve() / MARKER).exists():
+            return cand.resolve()
+    except Exception:
+        pass
     if cli_file:
         d = Path(cli_file).resolve().parent
         if (d / MARKER).exists():

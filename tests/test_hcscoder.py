@@ -85,7 +85,9 @@ def test_extract_code_blocks_tolerates_truncation():
 
 
 def test_find_app_home_priority(tmp_path, monkeypatch):
+    import sys
     from services import paths as P
+    monkeypatch.setattr(sys, "prefix", str(tmp_path / "syspython"))
     home = tmp_path / "home"
     (home / "config").mkdir(parents=True)
     (home / "config" / "models.json").write_text("{}", encoding="utf-8")
@@ -108,3 +110,16 @@ def test_resolve_user_path(tmp_path):
     assert resolve_user_path("sub", str(tmp_path)).endswith("sub")
     abs_p = str((tmp_path / "f.txt").resolve())
     assert resolve_user_path(abs_p, "/elsewhere") == abs_p
+
+
+def test_find_app_home_venv_relative(tmp_path, monkeypatch):
+    import sys
+    from services import paths as P
+    install = tmp_path / "prime-agent"
+    (install / "config").mkdir(parents=True)
+    (install / "config" / "models.json").write_text("{}", encoding="utf-8")
+    venv = install / ".venv"
+    venv.mkdir()
+    monkeypatch.delenv("PRIME_HOME", raising=False)
+    monkeypatch.setattr(sys, "prefix", str(venv))
+    assert P.find_app_home("/nonexistent/cli.py", str(tmp_path)) == install.resolve()
