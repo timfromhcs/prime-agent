@@ -1,7 +1,7 @@
 {
   "timestamp": "Tue Sep 15 2026 (V3 workbench)",
   "all_criteria_verified": true,
-  "criteria_count": 50,
+  "criteria_count": 53,
   "results": {
     "RLM": {
       "status": "VERIFIED",
@@ -202,6 +202,18 @@
     "TESTS_39": {
       "status": "VERIFIED",
       "evidence": "39 passed"
+    },
+    "MULTILINE": {
+      "status": "VERIFIED",
+      "evidence": "services/cli/input.py: backslash/bracket/paste modes; unit-tested; piped /paste + bracket-continuation exit 0"
+    },
+    "CLAUDE_UI": {
+      "status": "VERIFIED",
+      "evidence": "services/cli/ui.py Renderer (banner/spinner/live/cards/approval/final/footer); REPL + run share it; ASCII-safe source scan in tests"
+    },
+    "TESTS_42": {
+      "status": "VERIFIED",
+      "evidence": "42 passed"
     }
   }
 }

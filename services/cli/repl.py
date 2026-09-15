@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import re
 import subprocess
+import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -16,9 +17,28 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Confirm, Prompt
 
+from services.cli.input import read_multiline, read_paste
+from services.cli.ui import Renderer
 from services.permissions.engine import PermissionEngine
 
 BANNER = "[bold cyan]hcscoder[/bold cyan] [dim]v3 * local-first agent workbench[/dim]"
+
+
+def app_version() -> str:
+    try:
+        import tomllib as _t
+        return _t.load(open("pyproject.toml", "rb"))["project"]["version"]
+    except Exception:
+        return "?"
+
+
+def primary_model() -> str:
+    try:
+        import json as _j
+        cfg = _j.loads(Path("config/models.json").read_text(encoding="utf-8"))
+        return cfg.get("primary", {}).get("name", "?")
+    except Exception:
+        return "?"
 
 HELP = """[bold]Slash commands[/bold]
   /help              this help            /new [title]       new session
@@ -27,8 +47,11 @@ HELP = """[bold]Slash commands[/bold]
   /review            approve/revert files /commit [-m msg]    safe git commit
   /models            model catalog        /doctor            diagnostics
   /compact           compact context      /export            markdown export
-  /clear             clear screen         /quit              exit
-[dim]@path/to/file embeds file context * Ctrl+C interrupts a run[/dim]"""
+  /paste             multiline paste      /clear             clear screen
+  /quit              exit
+[dim]@path/to/file embeds file context
+multiline: trailing \\ continues, unclosed brackets keep reading, /paste ends with `.`
+Ctrl+C interrupts a run[/dim]"""
 
 RISKY_PROMPT_PATTERNS = [
     r"rm\s+-rf\s+[/~]",
@@ -81,6 +104,9 @@ class HCSRepl:
         self.cwd = cwd
         self.file_base = file_base or cwd  # @file refs resolve here (invocation dir)
         self.console = Console()
+        self.ui = Renderer(self.console)
+        self.model = primary_model()
+        self.version = app_version()
         self.session_id: Optional[str] = None
         self.perms = PermissionEngine()
 
@@ -101,7 +127,8 @@ class HCSRepl:
         if not s:
             return "[dim]no session[/dim]"
         return (f"[dim]session {s.session_id} * mode [cyan]{s.mode}[/cyan] * "
-                f"msgs {len(s.messages)} * tools {s.usage.get('tool_calls', 0)} * "
+                f"model {self.model} * msgs {len(s.messages)} * "
+                f"tools {s.usage.get('tool_calls', 0)} * "
                 f"tok~{s.usage.get('tokens_est', 0)}[/dim]")
 
     # -- approval gate (UX layer; MCP policy still enforces underneath) --
@@ -113,10 +140,8 @@ class HCSRepl:
         card = self.perms.approval_card("shell_exec", prompt[:200],
                                         f"matched {pat} ({dec['reason']})",
                                         dec["risk"], prompt[:200])
-        self.console.print(Panel(
-            f"[bold]Approval required[/bold] (risk: {card['risk']})\n"
-            f"action: {card['action']}\nreason: {card['reason']}",
-            title="permissions", border_style="yellow"))
+        self.ui.approval(card["action"], card["reason"], card["risk"],
+                         card.get("proposed_command", ""))
         if dec["decision"] == "deny":
             self.console.print("[red]Denied by policy.[/red]")
             return False
@@ -134,42 +159,44 @@ class HCSRepl:
             return
         if not self.approval_gate(prompt):
             return
-        buf: List[str] = []
-        elapsed = ""
+        stream = self.ui.new_stream()
+        t_start = time.time()
 
         async def _drain():
-            nonlocal elapsed
             async for ev in self.rt.run_task_stream(self.session_id, prompt):
                 t = ev.get("type")
                 if t == "status":
-                    self.console.print(f"[dim]> {ev.get('text')}[/dim]")
+                    stream.pause()
+                    self.ui.status_line(ev.get("text", ""))
+                    stream.resume()
                 elif t == "delta":
-                    buf.append(ev.get("text", ""))
-                    self.console.print(ev.get("text", ""), end="")
+                    stream.append(ev.get("text", ""))
                 elif t == "tool":
-                    self.console.print(f"\n[dim]{ev.get('text')}[/dim]")
-                elif t == "done":
-                    elapsed = str(ev.get("elapsed_s", "?"))
+                    stream.pause()
                     self.console.print()
-                    self.console.print(Panel(
-                        Markdown((ev.get("response") or "")[:6000]),
-                        title=f"hcscoder ok {elapsed}s", border_style="green"))
-                    if ev.get("verification"):
-                        self.console.print(f"[dim]verification: {ev['verification']}[/dim]")
-                    if ev.get("artifacts"):
-                        self.console.print(f"[dim]artifacts: {ev['artifacts']}[/dim]")
+                    self.ui.tool_card("tool", ev.get("text", ""), state="running",
+                                      elapsed_s=time.time() - t_start)
+                    stream.resume()
+                elif t == "done":
+                    full = stream.finish()
+                    self.console.print()
+                    self.ui.final(ev.get("response") or full, ok=True,
+                                  elapsed=str(ev.get("elapsed_s", "?")),
+                                  verification=ev.get("verification"),
+                                  artifacts=ev.get("artifacts"))
                 elif t == "error":
-                    self.console.print(f"\n[red]Failed: {ev.get('reason')}[/red] "
-                                       "[dim](state persisted - refine + retry)[/dim]")
+                    stream.finish()
+                    self.ui.error_card(ev.get("reason", "unknown"))
 
         try:
-            asyncio.run(_drain())
+            with self.ui.thinking("Agent working..."):
+                stream.start()
+                asyncio.run(_drain())
         except KeyboardInterrupt:
+            stream.finish()
             self.rt.interrupt(self.session_id)
             self.console.print("\n[yellow]Interrupted - state persisted.[/yellow]")
             return
-        if buf:
-            pass
         self.console.print(self.footer())
 
     # -- review / commit --
@@ -284,23 +311,32 @@ class HCSRepl:
         self.console.print(_S(full_diff(s.cwd if s else self.cwd)[:15000] or "(no diff)", "diff"))
 
     def run(self) -> None:
-        self.console.print(Panel(f"{BANNER}\n[dim]/help * @file to attach * Ctrl+C interrupts[/dim]",
-                                 border_style="cyan"))
+        self.ui.banner(self.version, self.model, self.cwd)
         self.ensure_session()
         self.console.print(self.footer())
         while True:
             try:
-                line = Prompt.ask("[bold cyan]hcscoder>[/bold cyan]").strip()
-            except (KeyboardInterrupt, EOFError):
+                line = read_multiline("[bold cyan]hcscoder>[/bold cyan] ")
+            except KeyboardInterrupt:
                 self.console.print("\n[dim]Sessions persist - resume anytime. Bye.[/dim]")
                 break
+            if line is None:  # EOF (piped stdin exhausted)
+                self.console.print("\n[dim]Sessions persist - resume anytime. Bye.[/dim]")
+                break
+            line = line.strip()
             if not line:
                 continue
             if line.startswith("/"):
                 cmd, args = parse_slash(line)
-                if not self.handle_slash(cmd, args):
-                    break
-                continue
+                if cmd == "paste":
+                    pasted = read_paste()
+                    if pasted is None or not pasted.strip():
+                        continue
+                    line = pasted.strip()
+                else:
+                    if not self.handle_slash(cmd, args):
+                        break
+                    continue
             prompt, embedded = expand_file_refs(line, self.file_base)
             for e in embedded:
                 self.console.print(f"[dim]attached: {e}[/dim]")

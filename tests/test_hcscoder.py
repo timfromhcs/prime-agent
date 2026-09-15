@@ -123,3 +123,45 @@ def test_find_app_home_venv_relative(tmp_path, monkeypatch):
     monkeypatch.delenv("PRIME_HOME", raising=False)
     monkeypatch.setattr(sys, "prefix", str(venv))
     assert P.find_app_home("/nonexistent/cli.py", str(tmp_path)) == install.resolve()
+
+
+def test_multiline_continuation():
+    from services.cli.input import join_continuation, needs_continuation, read_multiline
+    assert needs_continuation("foo \\") is True
+    assert needs_continuation("foo") is False
+    assert needs_continuation("f(a,") is True
+    assert needs_continuation("f(a)") is False
+    assert needs_continuation('x = "abc') is True
+    assert needs_continuation("x = '''abc") is True
+    assert needs_continuation("x = '''abc'''") is False
+    assert join_continuation(["a \\", "b"]) == "a \nb"
+    out = read_multiline(source=["total = (", "1 +", "2)"])
+    assert out == "total = (\n1 +\n2)"
+    assert read_multiline(source=[]) is None
+
+
+def test_paste_mode():
+    from services.cli.input import read_paste
+    assert read_paste(source=["line1", "line2", ".", "ignored"]) == "line1\nline2"
+    assert read_paste(source=[]) is None
+
+
+def test_ui_renders_ascii_safe():
+    from rich.console import Console as _C
+    from services.cli.ui import Renderer
+    c = _C(record=True, width=80)
+    ui = Renderer(c)
+    ui.banner("3.2.0", "Qwen3-4B", "C:/proj")
+    ui.tool_card("kernel_exec", "x = 1", state="ok", elapsed_s=1.2)
+    ui.final("hello **world**", ok=True, elapsed="3")
+    ui.error_card("boom")
+    ui.approval("shell", "why", "high", "rm f")
+    out = c.export_text()
+    for token in ["hcscoder", "3.2.0", "kernel_exec", "hello", "WHAT FAILED", "Approval"]:
+        assert token in out, token
+    # our own strings must be pure ASCII (rich borders auto-downgrade on pipes)
+    import io as _io
+    for fn in ["services/cli/ui.py", "services/cli/input.py", "services/cli/repl.py"]:
+        src = _io.open(fn, encoding="utf-8").read()
+        bad = sorted({ch for ch in src if ord(ch) > 127})
+        assert bad == [], (fn, bad)
