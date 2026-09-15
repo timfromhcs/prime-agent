@@ -118,10 +118,13 @@ def doctor():
     else:
         results.append(("Models Config", "Missing config/models.json", False))
 
-    # 4. Image Model (weights must exist, not just the directory)
+    # 4. Image Model (weights must exist, not just the directory;
+    #    diffusers loads .safetensors or .bin)
     img_path = Path("models/image/tiny-sd")
-    img_weights = img_path / "unet" / "diffusion_pytorch_model.safetensors"
-    results.append(("Diffusion Model (tiny-sd)", str(img_weights), img_weights.exists()))
+    img_weights = [img_path / "unet" / "diffusion_pytorch_model.safetensors",
+                   img_path / "unet" / "diffusion_pytorch_model.bin"]
+    img_ok = any(w.exists() for w in img_weights)
+    results.append(("Diffusion Model (tiny-sd)", str(img_weights[0]), img_ok))
 
     # 5. RLM Kernel
     try:
