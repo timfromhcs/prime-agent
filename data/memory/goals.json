@@ -1,0 +1,30 @@
+{
+  "goal_4413b4b6": {
+    "goal_id": "goal_4413b4b6",
+    "title": "Autonomous Audit",
+    "description": "Continuous system monitoring",
+    "status": "COMPLETED",
+    "created_at": "2026-09-15T11:28:10.165215+00:00",
+    "updated_at": "2026-09-15T11:28:10.175308+00:00",
+    "milestones": [
+      {
+        "audit": "clean"
+      }
+    ],
+    "metadata": {}
+  },
+  "goal_4974b174": {
+    "goal_id": "goal_4974b174",
+    "title": "Autonomous Audit",
+    "description": "Continuous system monitoring",
+    "status": "COMPLETED",
+    "created_at": "2026-09-15T13:13:33.496434+00:00",
+    "updated_at": "2026-09-15T13:13:33.509138+00:00",
+    "milestones": [
+      {
+        "audit": "clean"
+      }
+    ],
+    "metadata": {}
+  }
+}

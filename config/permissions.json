@@ -1,0 +1,84 @@
+{
+  "rules": [
+    {
+      "scope": "path",
+      "pattern": "*.env",
+      "action": "ask"
+    },
+    {
+      "scope": "path",
+      "pattern": ".env*",
+      "action": "ask"
+    },
+    {
+      "scope": "path",
+      "pattern": "*credentials*",
+      "action": "ask"
+    },
+    {
+      "scope": "path",
+      "pattern": "*secret*",
+      "action": "ask"
+    },
+    {
+      "scope": "path",
+      "pattern": "*token*",
+      "action": "ask"
+    },
+    {
+      "scope": "path",
+      "pattern": "*.pem",
+      "action": "ask"
+    },
+    {
+      "scope": "path",
+      "pattern": "*.key",
+      "action": "ask"
+    },
+    {
+      "scope": "path",
+      "pattern": "id_rsa*",
+      "action": "ask"
+    },
+    {
+      "scope": "path",
+      "pattern": "*password*",
+      "action": "ask"
+    },
+    {
+      "scope": "command",
+      "pattern": "rm -rf /*",
+      "action": "deny"
+    },
+    {
+      "scope": "command",
+      "pattern": "rm -rf ~*",
+      "action": "deny"
+    },
+    {
+      "scope": "command",
+      "pattern": "mkfs*",
+      "action": "deny"
+    },
+    {
+      "scope": "command",
+      "pattern": ":(){:|:&};*",
+      "action": "deny"
+    },
+    {
+      "scope": "command",
+      "pattern": "*--force*push*",
+      "action": "deny"
+    },
+    {
+      "scope": "command",
+      "pattern": "git push --force*",
+      "action": "deny"
+    },
+    {
+      "scope": "command",
+      "pattern": "del /f /s /q C:\\*",
+      "action": "deny"
+    }
+  ]
+}

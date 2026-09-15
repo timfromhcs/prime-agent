@@ -1,0 +1,51 @@
+{
+  "entries": {
+    "policy_zero_mocks": {
+      "id": "policy_zero_mocks",
+      "kind": "strategy",
+      "name": "policy_zero_mocks",
+      "content": "Base Safety: Production code must never mock real runtimes or models.",
+      "created_at": "2026-09-15T13:16:50.580077+00:00",
+      "updated_at": "2026-09-15T13:16:50.580077+00:00",
+      "scope": "global",
+      "reference": {},
+      "arguments": {},
+      "metadata": {},
+      "immutable": true,
+      "source": "base_policy",
+      "version": 1
+    },
+    "policy_path_sandbox": {
+      "id": "policy_path_sandbox",
+      "kind": "strategy",
+      "name": "policy_path_sandbox",
+      "content": "Base Safety: All file writes must remain strictly within workspace boundaries.",
+      "created_at": "2026-09-15T13:16:50.580077+00:00",
+      "updated_at": "2026-09-15T13:16:50.580077+00:00",
+      "scope": "global",
+      "reference": {},
+      "arguments": {},
+      "metadata": {},
+      "immutable": true,
+      "source": "base_policy",
+      "version": 1
+    },
+    "policy_bounded_healing": {
+      "id": "policy_bounded_healing",
+      "kind": "strategy",
+      "name": "policy_bounded_healing",
+      "content": "Base Safety: Automated repair attempts must never exceed budget ceiling.",
+      "created_at": "2026-09-15T13:16:50.580077+00:00",
+      "updated_at": "2026-09-15T13:16:50.580077+00:00",
+      "scope": "global",
+      "reference": {},
+      "arguments": {},
+      "metadata": {},
+      "immutable": true,
+      "source": "base_policy",
+      "version": 1
+    }
+  },
+  "refinements": [],
+  "last_updated": "2026-09-15T13:16:50.581081+00:00"
+}

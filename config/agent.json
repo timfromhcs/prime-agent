@@ -1,0 +1,10 @@
+{
+  "max_turns": 30,
+  "max_recursion_depth": 4,
+  "max_subagents": 8,
+  "token_budget": 100000,
+  "timeout_seconds": 300,
+  "heartbeat_interval_seconds": 15,
+  "verification_policy": "strict",
+  "compaction_threshold_tokens": 16384
+}

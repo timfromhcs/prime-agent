@@ -1,0 +1,56 @@
+{
+  "sess_2b58de42": {
+    "session_id": "sess_2b58de42",
+    "status": "DETACHED",
+    "goal_id": "goal_4413b4b6",
+    "created_at": "2026-09-15T11:28:10.167215+00:00",
+    "last_heartbeat": "2026-09-15T13:22:40.441346+00:00",
+    "turn_count": 4,
+    "metadata": {}
+  },
+  "sess_bc52b3b2": {
+    "session_id": "sess_bc52b3b2",
+    "status": "DETACHED",
+    "goal_id": "goal_4974b174",
+    "created_at": "2026-09-15T13:13:33.501302+00:00",
+    "last_heartbeat": "2026-09-15T13:22:40.441346+00:00",
+    "turn_count": 4,
+    "metadata": {}
+  },
+  "sess_acd6334f": {
+    "session_id": "sess_acd6334f",
+    "status": "DETACHED",
+    "goal_id": "goal_25bfa1ce",
+    "created_at": "2026-09-15T13:16:50.588093+00:00",
+    "last_heartbeat": "2026-09-15T13:22:40.441346+00:00",
+    "turn_count": 4,
+    "metadata": {}
+  },
+  "sess_7dcc93f8": {
+    "session_id": "sess_7dcc93f8",
+    "status": "DETACHED",
+    "goal_id": "goal_096f84d1",
+    "created_at": "2026-09-15T13:18:34.840225+00:00",
+    "last_heartbeat": "2026-09-15T13:22:40.441346+00:00",
+    "turn_count": 3,
+    "metadata": {}
+  },
+  "sess_441aff68": {
+    "session_id": "sess_441aff68",
+    "status": "DETACHED",
+    "goal_id": "goal_6caf4f21",
+    "created_at": "2026-09-15T13:19:51.766104+00:00",
+    "last_heartbeat": "2026-09-15T13:22:40.441346+00:00",
+    "turn_count": 2,
+    "metadata": {}
+  },
+  "sess_e1aef521": {
+    "session_id": "sess_e1aef521",
+    "status": "DETACHED",
+    "goal_id": "goal_36f79cb7",
+    "created_at": "2026-09-15T13:22:40.436326+00:00",
+    "last_heartbeat": "2026-09-15T13:22:40.441346+00:00",
+    "turn_count": 1,
+    "metadata": {}
+  }
+}

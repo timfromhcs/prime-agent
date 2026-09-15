@@ -1,0 +1,95 @@
+{
+  "timestamp": "2026-09-15T14:43:00+02:00",
+  "gaps": [
+    {
+      "subsystem": "RLM Kernel & Agent Loop",
+      "current_implementation": "ReplSession provides basic eval/dill snapshot, but root_agent.py executes hardcoded code strings and falls back to generic LLM completion.",
+      "intended_architecture": "Upstream Prime RLM architecture: LLM drives persistent Python REPL in a multi-turn reasoning and execution loop, using rlm.spawn, rlm.bash, rlm.harness, rlm.mcp, and programmatic data structures.",
+      "gap": "Missing autonomous REPL control loop; missing upstream rlm shim compatibility (rlm.spawn, rlm.bash, rlm.harness).",
+      "severity": "P0",
+      "evidence": "services/agent/root_agent.py lines 148-176 show hardcoded prompt checks rather than iterative agent-driven execution.",
+      "recommended_migration": "Implement Upstream-compatible RLM kernel shim (rlm/__init__.py, rlm/bash.py, rlm/harness.py) and refactor root_agent.py to an autonomous programmatic loop."
+    },
+    {
+      "subsystem": "Subagent Orchestration",
+      "current_implementation": "SubagentManager tracks in-memory dataclass objects without real isolated session execution.",
+      "intended_architecture": "Real child subagents spawned into isolated workspaces with dedicated REPL sessions, message queues, and structured result collection.",
+      "gap": "Subagents are largely declarative metadata rather than independently executing agents.",
+      "severity": "P0",
+      "evidence": "services/subagents/manager.py returns handle without running async subagent execution loops.",
+      "recommended_migration": "Upgrade SubagentManager to spawn and execute real independent child sessions with bounded recursion (depth <= 3)."
+    },
+    {
+      "subsystem": "Continual Harness & Self-Improvement",
+      "current_implementation": "services/rlm/harness.py only stores key-value dicts and snapshots.",
+      "intended_architecture": "Upstream Harness with typed entries (skills, memory, strategy, subagents, retrieval), immutable base safety policies, and evidence-based refinement.",
+      "gap": "Missing structured harness schema, skill refinement lifecycle, and immutable policy enforcement.",
+      "severity": "P1",
+      "evidence": "services/rlm/harness.py lacks create_skill, update_skill, create_memory, create_strategy methods expected by upstream Prime Agent.",
+      "recommended_migration": "Adopt upstream rlm/harness.py architecture and integrate with local skills directory."
+    },
+    {
+      "subsystem": "Model Verification & Catalog",
+      "current_implementation": "MODELS.md contained fabricated SHA256 hashes for draft, abliterated, vision, and mmproj models.",
+      "intended_architecture": "All registered models must have authentic, independently verified SHA256 hashes and tested inference performance.",
+      "gap": "Documentation hash discrepancy vs actual files.",
+      "severity": "P1",
+      "evidence": "Actual SHA256 hashes verified via PowerShell Get-FileHash differ from MODELS.md for 4 out of 5 files.",
+      "recommended_migration": "Update models.json and MODELS.md with real cryptographic hashes and add automated hash verification in doctor.ps1."
+    },
+    {
+      "subsystem": "Model Strategy & Router",
+      "current_implementation": "Static port mapping in model_manager.py with basic router.",
+      "intended_architecture": "Dynamic capability-aware router selecting between LOW_MEMORY, BALANCED, QUALITY profiles, handling on-demand loading and VRAM eviction.",
+      "gap": "Missing multi-tier hardware profiles and automated model unloading.",
+      "severity": "P1",
+      "evidence": "services/llm/router.py has hardcoded fallback to primary model without memory-aware eviction.",
+      "recommended_migration": "Build multi-tier profile manager (LOW_MEMORY: 4B, BALANCED: 4B+spec, QUALITY: 8B if available) with LRU model lifecycle."
+    },
+    {
+      "subsystem": "Image Generation & Editing",
+      "current_implementation": "tiny-sd generates 256x256 low quality images; img2img is basic noise overlay without mask/inpainting; QA is purely CV edge variance.",
+      "intended_architecture": "Decoupled image agent, on-demand loading, real semantic editing, and VLM-based requirement verification checklist.",
+      "gap": "Toy image model, naive editing, and absence of semantic VLM image verification.",
+      "severity": "P1",
+      "evidence": "services/image/qa.py only computes Laplacian variance and color histograms; does not query VLM to check prompt compliance.",
+      "recommended_migration": "Integrate VLM-based semantic QA checklist (prompts vs generated visual elements) and modularize image backend."
+    },
+    {
+      "subsystem": "MCP Specification Compliance",
+      "current_implementation": "Custom JSON-RPC server/client in services/mcp/ mimicking some MCP methods.",
+      "intended_architecture": "Compliance with official MCP schema (tools/list with JSONSchema, tools/call with content blocks, proper error and cancellation handling).",
+      "gap": "Custom implementation diverged from standard MCP SDK/specification.",
+      "severity": "P1",
+      "evidence": "services/mcp/server.py does not use mcp package protocol types even though mcp package is installed.",
+      "recommended_migration": "Rebuild MCP layer using official mcp Python SDK and upstream rlm/mcp.py conventions."
+    },
+    {
+      "subsystem": "Self-Healing Reversibility",
+      "current_implementation": "services/agent/self_healing.py applies text replacements without automatic state rollback if verification fails.",
+      "intended_architecture": "Pre-repair snapshot, controlled patch application, targeted + regression testing, and mandatory rollback upon failure.",
+      "gap": "Self-healing is not fully transactional or reversible.",
+      "severity": "P1",
+      "evidence": "services/agent/self_healing.py does not call harness snapshot or rollback.",
+      "recommended_migration": "Tie SelfHealingCoordinator directly to HarnessStateManager snapshot/rollback."
+    },
+    {
+      "subsystem": "Benchmarking & KV Cache / Speculative Matrix",
+      "current_implementation": "benchmark.ps1 only measures single speculative decoding run without comparative baseline.",
+      "intended_architecture": "Comparative benchmarks: Baseline vs Speculative, KV Cache F16 vs Q8/Q4, Flash Attention ON vs OFF.",
+      "gap": "Missing comparative benchmark matrix.",
+      "severity": "P2",
+      "evidence": "benchmarks/ only contained single report_1789472951.json without comparative runs.",
+      "recommended_migration": "Implement benchmark_matrix.py executing baseline vs draft, KV cache modes, and generating benchmarks/baseline.json and benchmarks/upgraded.json."
+    },
+    {
+      "subsystem": "Daemon & Heartbeat Progression",
+      "current_implementation": "PrimeDaemon heartbeat loop only sleeps and checks if running.",
+      "intended_architecture": "State-aware heartbeat inspecting active goals, progressing subagent tasks, monitoring system memory, and executing maintenance.",
+      "gap": "Heartbeat does no meaningful work.",
+      "severity": "P2",
+      "evidence": "services/agent/daemon.py heartbeat loop contains only asyncio.sleep and passive logging.",
+      "recommended_migration": "Upgrade heartbeat to inspect goals.json, check pending tasks, and trigger agent steps."
+    }
+  ]
+}

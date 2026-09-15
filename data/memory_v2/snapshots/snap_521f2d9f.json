@@ -1,0 +1,128 @@
+{
+  "entries": {
+    "policy_zero_mocks": {
+      "id": "policy_zero_mocks",
+      "kind": "strategy",
+      "name": "policy_zero_mocks",
+      "content": "Base Safety: Production code must never mock real runtimes or models.",
+      "created_at": "2026-09-15T13:16:50.580077+00:00",
+      "updated_at": "2026-09-15T13:16:50.580077+00:00",
+      "scope": "global",
+      "reference": {},
+      "arguments": {},
+      "metadata": {},
+      "immutable": true,
+      "source": "base_policy",
+      "version": 1
+    },
+    "policy_path_sandbox": {
+      "id": "policy_path_sandbox",
+      "kind": "strategy",
+      "name": "policy_path_sandbox",
+      "content": "Base Safety: All file writes must remain strictly within workspace boundaries.",
+      "created_at": "2026-09-15T13:16:50.580077+00:00",
+      "updated_at": "2026-09-15T13:16:50.580077+00:00",
+      "scope": "global",
+      "reference": {},
+      "arguments": {},
+      "metadata": {},
+      "immutable": true,
+      "source": "base_policy",
+      "version": 1
+    },
+    "policy_bounded_healing": {
+      "id": "policy_bounded_healing",
+      "kind": "strategy",
+      "name": "policy_bounded_healing",
+      "content": "Base Safety: Automated repair attempts must never exceed budget ceiling.",
+      "created_at": "2026-09-15T13:16:50.580077+00:00",
+      "updated_at": "2026-09-15T13:16:50.580077+00:00",
+      "scope": "global",
+      "reference": {},
+      "arguments": {},
+      "metadata": {},
+      "immutable": true,
+      "source": "base_policy",
+      "version": 1
+    },
+    "skill_a21ee784": {
+      "id": "skill_a21ee784",
+      "kind": "skill",
+      "name": "v2_skill",
+      "content": "Write tests first.",
+      "created_at": "2026-09-15T13:16:50.583082+00:00",
+      "updated_at": "2026-09-15T13:22:40.431327+00:00",
+      "scope": "local",
+      "reference": {},
+      "arguments": {},
+      "metadata": {
+        "description": "Continuous testing"
+      },
+      "immutable": false,
+      "source": "agent",
+      "version": 4
+    }
+  },
+  "refinements": [
+    {
+      "id": "snap_5bd0ef28",
+      "timestamp": "2026-09-15T13:16:50.581081+00:00",
+      "description": "Pre-create skill: v2_skill",
+      "entry_ids": [
+        "policy_zero_mocks",
+        "policy_path_sandbox",
+        "policy_bounded_healing"
+      ],
+      "backup_file": "data\\memory_v2\\snapshots\\snap_5bd0ef28.json"
+    },
+    {
+      "id": "snap_560c1502",
+      "timestamp": "2026-09-15T13:18:34.832588+00:00",
+      "description": "Pre-create skill: v2_skill",
+      "entry_ids": [
+        "policy_zero_mocks",
+        "policy_path_sandbox",
+        "policy_bounded_healing",
+        "skill_a21ee784"
+      ],
+      "backup_file": "data\\memory_v2\\snapshots\\snap_560c1502.json"
+    },
+    {
+      "id": "snap_353257bb",
+      "timestamp": "2026-09-15T13:19:51.758986+00:00",
+      "description": "Pre-create skill: v2_skill",
+      "entry_ids": [
+        "policy_zero_mocks",
+        "policy_path_sandbox",
+        "policy_bounded_healing",
+        "skill_a21ee784"
+      ],
+      "backup_file": "data\\memory_v2\\snapshots\\snap_353257bb.json"
+    },
+    {
+      "id": "snap_9a7679e9",
+      "timestamp": "2026-09-15T13:20:07.481266+00:00",
+      "description": "pre_repair_accept_heal",
+      "entry_ids": [
+        "policy_zero_mocks",
+        "policy_path_sandbox",
+        "policy_bounded_healing",
+        "skill_a21ee784"
+      ],
+      "backup_file": "data\\memory_v2\\snapshots\\snap_9a7679e9.json"
+    },
+    {
+      "id": "snap_e243adff",
+      "timestamp": "2026-09-15T13:22:40.427814+00:00",
+      "description": "Pre-create skill: v2_skill",
+      "entry_ids": [
+        "policy_zero_mocks",
+        "policy_path_sandbox",
+        "policy_bounded_healing",
+        "skill_a21ee784"
+      ],
+      "backup_file": "data\\memory_v2\\snapshots\\snap_e243adff.json"
+    }
+  ],
+  "last_updated": "2026-09-15T13:23:00.946967+00:00"
+}

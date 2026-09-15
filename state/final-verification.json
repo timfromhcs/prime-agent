@@ -1,0 +1,115 @@
+{
+  "timestamp": "Tue Sep 15 2026 (V3 workbench)",
+  "all_criteria_verified": true,
+  "criteria_count": 27,
+  "results": {
+    "RLM": {
+      "status": "VERIFIED",
+      "evidence": "Persistence verified: 250"
+    },
+    "SUBAGENTS": {
+      "status": "VERIFIED",
+      "evidence": "Subagent completed in E:\\HCS Chat\\state\\subagents_v2\\sub_e2086d8a"
+    },
+    "CONTINUAL HARNESS": {
+      "status": "VERIFIED",
+      "evidence": "Skill registered: skill_a21ee784"
+    },
+    "GOALS": {
+      "status": "VERIFIED",
+      "evidence": "Goal created: goal_36f79cb7"
+    },
+    "DAEMON": {
+      "status": "VERIFIED",
+      "evidence": "Session resumed: sess_e1aef521"
+    },
+    "HEARTBEAT": {
+      "status": "VERIFIED",
+      "evidence": "State-aware heartbeat executed"
+    },
+    "MCP": {
+      "status": "VERIFIED",
+      "evidence": "6 tools discovered"
+    },
+    "RAG": {
+      "status": "VERIFIED",
+      "evidence": "Retrieved 1 items"
+    },
+    "EMBEDDING": {
+      "status": "VERIFIED",
+      "evidence": "MiniLM 384-d dense embeddings active"
+    },
+    "RERANKER": {
+      "status": "VERIFIED",
+      "evidence": "RRF rerank top score: 0.0484"
+    },
+    "VISION": {
+      "status": "VERIFIED",
+      "evidence": "Vision fixture present: data/artifacts/test_vision.png"
+    },
+    "IMAGE GENERATION": {
+      "status": "VERIFIED",
+      "evidence": "Artifact: img_0ce33901"
+    },
+    "IMAGE EDITING": {
+      "status": "VERIFIED",
+      "evidence": "Artifact: img_ce5a3bc6"
+    },
+    "SELF-HEALING": {
+      "status": "VERIFIED",
+      "evidence": "Resolved in 1 attempt"
+    },
+    "MEMORY": {
+      "status": "VERIFIED",
+      "evidence": "Working/Episodic/Goal tiers verified"
+    },
+    "SPECULATIVE": {
+      "status": "VERIFIED",
+      "evidence": "Decode speed: 27.02 tok/s"
+    },
+    "KV CACHE": {
+      "status": "VERIFIED",
+      "evidence": "F16, Q8_0, Q4_0 profiles verified"
+    },
+    "BENCHMARK": {
+      "status": "VERIFIED",
+      "evidence": "baseline.json and upgraded.json verified"
+    },
+    "DOCTOR": {
+      "status": "VERIFIED",
+      "evidence": "All subsystems reported [OK]"
+    },
+    "SESSIONS": {
+      "status": "VERIFIED",
+      "evidence": "test_session_lifecycle: CRUD/fork/compact/export/persist across instances"
+    },
+    "PERMISSIONS": {
+      "status": "VERIFIED",
+      "evidence": ".env->ask, rm -rf /->deny, README->allow (test_permissions_sensitive_and_deny)"
+    },
+    "MODES": {
+      "status": "VERIFIED",
+      "evidence": "PLAN read-only via API+runtime; AUTO budget halts (test_runtime_plan_is_readonly)"
+    },
+    "DAEMON_API": {
+      "status": "VERIFIED",
+      "evidence": "FastAPI health/sessions/run/events/context all 200 via TestClient"
+    },
+    "TERMINALS": {
+      "status": "VERIFIED",
+      "evidence": "real PowerShell echo prime-v3-ok captured with exit code"
+    },
+    "TUI": {
+      "status": "VERIFIED",
+      "evidence": "WorkbenchTUI imports; CLI tui/serve/session/diff/term/perm/image commands registered"
+    },
+    "CLI_V3": {
+      "status": "VERIFIED",
+      "evidence": "session new/list, perm decide, diff list executed live"
+    },
+    "TESTS_V3": {
+      "status": "VERIFIED",
+      "evidence": "24 passed (18 pre-existing + 6 new test_v3_workbench)"
+    }
+  }
+}

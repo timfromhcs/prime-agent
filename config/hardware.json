@@ -1,0 +1,25 @@
+{
+  "platform": "Windows",
+  "release": "11",
+  "cpu": {
+    "name": "AMD Ryzen 7 7735HS with Radeon Graphics",
+    "cores": 8,
+    "threads": 16
+  },
+  "memory": {
+    "total_bytes": 21245952000,
+    "total_mb": 20261,
+    "available_bytes": 13522956288,
+    "available_mb": 12896
+  },
+  "gpu": {
+    "name": "AMD Radeon(TM) Graphics (RDNA2 680M)",
+    "vram_mb": 4096,
+    "vulkan_supported": true,
+    "vulkan_version": "1.4"
+  },
+  "storage": {
+    "workspace_drive": "E:",
+    "free_mb": 449512
+  }
+}

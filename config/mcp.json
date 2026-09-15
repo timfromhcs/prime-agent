@@ -1,0 +1,37 @@
+{
+  "servers": {
+    "filesystem": {
+      "enabled": true,
+      "root": "E:/HCS Chat"
+    },
+    "git": {
+      "enabled": true,
+      "allowed_commands": [
+        "status",
+        "log",
+        "diff",
+        "branch",
+        "add",
+        "commit"
+      ]
+    },
+    "python_exec": {
+      "enabled": true,
+      "timeout_seconds": 30
+    },
+    "rag_tool": {
+      "enabled": true
+    },
+    "image_tool": {
+      "enabled": true
+    }
+  },
+  "security_policy": {
+    "mode": "enforce",
+    "require_confirmation_for_destructive": false,
+    "sandbox_roots": [
+      "E:/HCS Chat",
+      "data/artifacts"
+    ]
+  }
+}

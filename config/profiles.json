@@ -1,0 +1,76 @@
+{
+  "LOW_MEMORY": {
+    "description": "Minimal memory footprint for constrained environments (< 8 GB RAM)",
+    "primary_model": "models/primary/Qwen3-4B-Q4_K_M.gguf",
+    "speculative_draft": null,
+    "backend": "vulkan",
+    "context_size": 2048,
+    "gpu_layers": 99,
+    "threads": 4,
+    "kv_cache_type": "q8_0",
+    "estimated_ram_mb": 2200
+  },
+  "BALANCED": {
+    "description": "Default daily driver: full speculative acceleration on Vulkan iGPU",
+    "primary_model": "models/primary/Qwen3-4B-Q4_K_M.gguf",
+    "speculative_draft": "models/draft/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "spec_draft_n_max": 8,
+    "backend": "vulkan",
+    "context_size": 4096,
+    "gpu_layers": 99,
+    "threads": 8,
+    "kv_cache_type": "f16",
+    "estimated_ram_mb": 3500
+  },
+  "QUALITY": {
+    "description": "High precision reasoning with expanded context window and F16 KV cache",
+    "primary_model": "models/primary/Qwen3-4B-Q4_K_M.gguf",
+    "speculative_draft": "models/draft/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "spec_draft_n_max": 8,
+    "backend": "vulkan",
+    "context_size": 8192,
+    "gpu_layers": 99,
+    "threads": 8,
+    "kv_cache_type": "f16",
+    "estimated_ram_mb": 4200
+  },
+  "LONG_CONTEXT": {
+    "description": "Extended context processing for large repository or document analysis",
+    "primary_model": "models/primary/Qwen3-4B-Q4_K_M.gguf",
+    "speculative_draft": null,
+    "backend": "vulkan",
+    "context_size": 16384,
+    "gpu_layers": 99,
+    "threads": 8,
+    "kv_cache_type": "q4_0",
+    "estimated_ram_mb": 4800
+  },
+  "CODING": {
+    "description": "Optimized for code generation, AST analysis, and unit test loops",
+    "primary_model": "models/primary/Qwen3-4B-Q4_K_M.gguf",
+    "speculative_draft": "models/draft/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "spec_draft_n_max": 8,
+    "backend": "vulkan",
+    "context_size": 4096,
+    "gpu_layers": 99,
+    "threads": 8,
+    "kv_cache_type": "f16",
+    "estimated_ram_mb": 3500
+  },
+  "VISION": {
+    "description": "Multimodal OCR and image inspection via Qwen2-VL-2B and mmproj",
+    "vision_model": "models/vision/Qwen2-VL-2B-Instruct-Q4_K_M.gguf",
+    "projector": "models/vision/mmproj-Qwen2-VL-2B-Instruct-f16.gguf",
+    "backend": "vulkan",
+    "context_size": 2048,
+    "gpu_layers": 99,
+    "threads": 8,
+    "estimated_ram_mb": 2600
+  },
+  "IMAGE": {
+    "description": "On-demand diffusion generation and editing via tiny-sd with VLM QA",
+    "pipeline": "models/image/tiny-sd",
+    "device": "cpu",
+    "estimated_ram_mb": 1800
+  }
+}

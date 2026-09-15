@@ -1,0 +1,29 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# Large binaries: re-fetch via bootstrap/install + model download (see README/MODELS.md)
+models/**/*.gguf
+models/**/*.safetensors
+models/**/*.pt
+models/**/*.bin
+models/**/.cache/
+runtime/llama.cpp/**/*.exe
+runtime/llama.cpp/**/*.dll
+
+# Runtime state (regeneriert sich)
+logs/
+*.log
+*.tmp
+benchmarks/report_*.json
+data/sessions/
+data/terminals/
+state/heartbeat.log
+state/subagents/
+state/subagents_v2/
+
+# Build artifacts
+dist/

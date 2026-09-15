@@ -1,0 +1,166 @@
+{
+  "img_d32da26e": {
+    "artifact_id": "img_d32da26e",
+    "file_path": "E:\\HCS Chat\\data\\artifacts\\img_d32da26e.png",
+    "file_name": "img_d32da26e.png",
+    "format": "PNG",
+    "size_bytes": 453312,
+    "sha256": "628ab99d755d535a39dfd19cbd2be5452faeaa9879573294067bf3d007d1683d",
+    "created_at": "2026-09-15T11:27:43.436142+00:00",
+    "model": "tiny-sd",
+    "prompt": "A high-tech glowing geometric matrix core",
+    "producer_agent": "ImageAgent",
+    "task_id": "e2e_gen_task",
+    "qa_status": "PASS",
+    "qa_notes": "Structural verification passed: valid resolution and rich contrast.",
+    "metadata": {
+      "steps": 10,
+      "guidance_scale": 7.5,
+      "width": 512,
+      "height": 512
+    }
+  },
+  "img_6a2a0cd8": {
+    "artifact_id": "img_6a2a0cd8",
+    "file_path": "E:\\HCS Chat\\data\\artifacts\\img_6a2a0cd8.png",
+    "file_name": "img_6a2a0cd8.png",
+    "format": "PNG",
+    "size_bytes": 454325,
+    "sha256": "ce3aec6f3115c4c8f3df72d95403c37751f2fbce62aac4ffd1606b6e741bb71e",
+    "created_at": "2026-09-15T11:28:10.146118+00:00",
+    "model": "tiny-sd-img2img",
+    "prompt": "A glowing cyan geometric matrix core surrounded by sparkles",
+    "producer_agent": "ImageAgent",
+    "task_id": "e2e_edit_task",
+    "qa_status": "PASS",
+    "qa_notes": "Structural verification passed: valid resolution and rich contrast.",
+    "metadata": {
+      "parent_image": "E:\\HCS Chat\\data\\artifacts\\img_d32da26e.png",
+      "strength": 0.55,
+      "steps": 8
+    }
+  },
+  "img_b80b7dea": {
+    "artifact_id": "img_b80b7dea",
+    "file_path": "E:\\HCS Chat\\data\\artifacts\\img_b80b7dea.png",
+    "file_name": "img_b80b7dea.png",
+    "format": "PNG",
+    "size_bytes": 374586,
+    "sha256": "7c2f72a50e632f7fab7de7889e2e8affb0214a723e030cee546f4107b5c99cd9",
+    "created_at": "2026-09-15T13:12:58.491848+00:00",
+    "model": "tiny-sd",
+    "prompt": "A high-tech glowing geometric matrix core",
+    "producer_agent": "ImageAgent",
+    "task_id": "e2e_gen_task",
+    "qa_status": "PASS",
+    "qa_notes": "Structural verification passed: valid resolution and rich contrast.",
+    "metadata": {
+      "steps": 10,
+      "guidance_scale": 7.5,
+      "width": 512,
+      "height": 512
+    }
+  },
+  "img_c51446be": {
+    "artifact_id": "img_c51446be",
+    "file_path": "E:\\HCS Chat\\data\\artifacts\\img_c51446be.png",
+    "file_name": "img_c51446be.png",
+    "format": "PNG",
+    "size_bytes": 366685,
+    "sha256": "9e4e5894df211393b787f1c3f38aacff75f065185f83c5b3e13f705f634bd3db",
+    "created_at": "2026-09-15T13:13:33.436271+00:00",
+    "model": "tiny-sd-img2img",
+    "prompt": "A glowing cyan geometric matrix core surrounded by sparkles",
+    "producer_agent": "ImageAgent",
+    "task_id": "e2e_edit_task",
+    "qa_status": "PASS",
+    "qa_notes": "Structural verification passed: valid resolution and rich contrast.",
+    "metadata": {
+      "parent_image": "E:\\HCS Chat\\data\\artifacts\\img_b80b7dea.png",
+      "strength": 0.55,
+      "steps": 8
+    }
+  },
+  "img_ca3b4a24": {
+    "artifact_id": "img_ca3b4a24",
+    "file_path": "E:\\HCS Chat\\data\\artifacts\\img_ca3b4a24.png",
+    "file_name": "img_ca3b4a24.png",
+    "format": "PNG",
+    "size_bytes": 78664,
+    "sha256": "73a276f8cc90ff9ec4eafa9fb3e67096862ac50e8afee842319d495549457fc3",
+    "created_at": "2026-09-15T13:20:02.732089+00:00",
+    "model": "tiny-sd",
+    "prompt": "A radiant neon crystal cube",
+    "producer_agent": "ImageAgent",
+    "task_id": "task_gen",
+    "qa_status": "PASS",
+    "qa_notes": "Structural verification passed: valid resolution and rich contrast.",
+    "metadata": {
+      "steps": 5,
+      "guidance_scale": 7.5,
+      "width": 256,
+      "height": 256
+    }
+  },
+  "img_2c7bc900": {
+    "artifact_id": "img_2c7bc900",
+    "file_path": "E:\\HCS Chat\\data\\artifacts\\img_2c7bc900.png",
+    "file_name": "img_2c7bc900.png",
+    "format": "PNG",
+    "size_bytes": 91004,
+    "sha256": "08b8291668fc66452e6dea90553342677e3e89aa67e885a39223b336d23bba64",
+    "created_at": "2026-09-15T13:20:07.470105+00:00",
+    "model": "tiny-sd-img2img",
+    "prompt": "A glowing golden neon crystal cube",
+    "producer_agent": "ImageAgent",
+    "task_id": "task_edit",
+    "qa_status": "PASS",
+    "qa_notes": "Structural verification passed: valid resolution and rich contrast.",
+    "metadata": {
+      "parent_image": "E:\\HCS Chat\\data\\artifacts\\img_ca3b4a24.png",
+      "strength": 0.5,
+      "steps": 4
+    }
+  },
+  "img_0ce33901": {
+    "artifact_id": "img_0ce33901",
+    "file_path": "E:\\HCS Chat\\data\\artifacts\\img_0ce33901.png",
+    "file_name": "img_0ce33901.png",
+    "format": "PNG",
+    "size_bytes": 105881,
+    "sha256": "0e225d185cca53bbf23b3a916b2868a727c2e19c1c053e972141b56fdb39f257",
+    "created_at": "2026-09-15T13:22:54.435452+00:00",
+    "model": "tiny-sd",
+    "prompt": "A radiant neon crystal cube",
+    "producer_agent": "ImageAgent",
+    "task_id": "task_gen",
+    "qa_status": "PASS",
+    "qa_notes": "Structural verification passed: valid resolution and rich contrast.",
+    "metadata": {
+      "steps": 5,
+      "guidance_scale": 7.5,
+      "width": 256,
+      "height": 256
+    }
+  },
+  "img_ce5a3bc6": {
+    "artifact_id": "img_ce5a3bc6",
+    "file_path": "E:\\HCS Chat\\data\\artifacts\\img_ce5a3bc6.png",
+    "file_name": "img_ce5a3bc6.png",
+    "format": "PNG",
+    "size_bytes": 109492,
+    "sha256": "97d9ace3a065c480d61bb0057acda34c7f2401794ad54b51fe4b2ce959c1ccd5",
+    "created_at": "2026-09-15T13:23:00.936368+00:00",
+    "model": "tiny-sd-img2img",
+    "prompt": "A glowing golden neon crystal cube",
+    "producer_agent": "ImageAgent",
+    "task_id": "task_edit",
+    "qa_status": "PASS",
+    "qa_notes": "Structural verification passed: valid resolution and rich contrast.",
+    "metadata": {
+      "parent_image": "E:\\HCS Chat\\data\\artifacts\\img_0ce33901.png",
+      "strength": 0.5,
+      "steps": 4
+    }
+  }
+}

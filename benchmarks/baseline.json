@@ -1,0 +1,13 @@
+{
+  "workload": "BASELINE_PRIMARY_STANDALONE",
+  "model": "Qwen3-4B-Q4_K_M.gguf",
+  "speculative": false,
+  "backend": "vulkan",
+  "gpu_layers": 99,
+  "context_size": 4096,
+  "load_time_seconds": 2.07,
+  "prompt_tokens_per_sec": 156.93,
+  "decode_tokens_per_sec": 26.77,
+  "ram_used_mb": 10031.76,
+  "measured_at": "Tue Sep 15 15:08:42 2026"
+}

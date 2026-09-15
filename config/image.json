@@ -1,0 +1,10 @@
+{
+  "model_path": "models/image/tiny-sd",
+  "default_steps": 10,
+  "default_guidance": 7.5,
+  "width": 512,
+  "height": 512,
+  "qa_enabled": true,
+  "qa_vlm_model": "models/vision/Qwen2-VL-2B-Instruct-Q4_K_M.gguf",
+  "qa_vlm_projector": "models/vision/mmproj-Qwen2-VL-2B-Instruct-f16.gguf"
+}

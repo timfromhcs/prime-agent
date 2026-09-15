@@ -1,0 +1,82 @@
+{
+  "timestamp": "2026-09-15T14:42:00+02:00",
+  "auditor": "Prime Agent Forensic Audit V2",
+  "workspace": "E:\\HCS Chat",
+  "hardware": {
+    "os": "Windows 11 Pro 64-bit (10.0.26200)",
+    "cpu": "AMD Ryzen 7 7735HS with Radeon 680M Graphics (8 cores, 16 threads)",
+    "gpu": "AMD Radeon 680M Integrated Graphics (Vulkan 1.4 API)",
+    "ram_total_bytes": 20822605824,
+    "ram_total_gb": 19.39,
+    "ram_free_gb": 11.2,
+    "storage_free_gb": 451.3
+  },
+  "subsystem_classification": {
+    "persistent_rlm": {
+      "classification": "PARTIALLY_VERIFIED",
+      "evidence": "ReplSession in services/rlm/repl.py provides Python eval and dill snapshots, but root_agent.py bypassed the REPL loop with hardcoded prompt wrappers and direct LLM calls instead of true iterative RLM programmatic execution.",
+      "upstream_alignment": "Needs full upstream rlm protocol compatibility (rlm.spawn, rlm.bash, rlm.harness, rlm.mcp, rlm.emit, rlm.host_request) and autonomous agent code execution loop."
+    },
+    "subagents": {
+      "classification": "PARTIALLY_VERIFIED",
+      "evidence": "Role definitions in services/subagents/roles.py exist and manager has in-memory tracking, but child sessions are not isolated processes with asynchronous protocol message passing.",
+      "upstream_alignment": "Upgrade to real subagent execution with independent context, session dirs, and result collection."
+    },
+    "continual_harness": {
+      "classification": "PARTIALLY_VERIFIED",
+      "evidence": "services/rlm/harness.py implements key-value snapshotting, but lacks upstream HarnessEntry/HarnessScope schema, skills lifecycle (create_skill, update_skill), and immutable safety base policy.",
+      "upstream_alignment": "Align with upstream rlm/harness.py and test real skill/memory refinement."
+    },
+    "model_stack": {
+      "classification": "PARTIALLY_VERIFIED",
+      "evidence": "GGUF models exist on disk and run on Vulkan, but previous documentation fabricated 4 out of 5 SHA256 hashes (draft, abliterated, vision, mmproj). Only Qwen3-4B hash was genuine. Real hashes verified via Get-FileHash.",
+      "actual_hashes": {
+        "primary": "F6F851777709861056EFCDAD3AF01DA38B31223A3BA26E61A4F8BF3A2195813A",
+        "draft": "74A4DA8C9FDBCD15BD1F6D01D621410D31C6FC00986F5EB687824E7B93D7A9DB",
+        "abliterated": "4EF305FFE4D769F9637DF26D0E0D56CFE9F2FD8284E34E2827BE496C8CD0674B",
+        "vision": "4EF095263343FC1237E8CA879790BB262BCF209F082E0A9BFCE219B7ECE55E8B",
+        "mmproj": "05CC3AE461A7B6AA4023312CCAB549ECAB77CF8677EFEE04F049FCBAB55B8BC3"
+      }
+    },
+    "rag": {
+      "classification": "VERIFIED",
+      "evidence": "all-MiniLM-L6-v2 embeddings, BM25Okapi, and RRF reranking are functional. Verified in tests and CLI. Needs programmatic RLM API (await rag.search) and formal precision/recall benchmark.",
+      "upstream_alignment": "Expose structured evidence packs directly into REPL namespace."
+    },
+    "vision": {
+      "classification": "VERIFIED",
+      "evidence": "Qwen2-VL-2B-Instruct + mmproj loads on Vulkan port 8081/8085 and executes OCR and visual QA on test images.",
+      "upstream_alignment": "Integrate with programmatic VLM tools and evaluate Qwen3-VL options."
+    },
+    "image_generation": {
+      "classification": "PARTIALLY_VERIFIED",
+      "evidence": "tiny-sd pipeline executes locally, but produces low-resolution toy outputs (256x256). Needs higher quality diffusion option or hardware-tuned profile.",
+      "upstream_alignment": "Separate image agent, on-demand loading, and semantic VLM requirement QA."
+    },
+    "image_editing": {
+      "classification": "PARTIALLY_VERIFIED",
+      "evidence": "Img2img applies generic noise transformation without mask/inpainting or semantic preservation. Visual QA relied solely on CV heuristics without VLM inspection.",
+      "upstream_alignment": "Add VLM-based requirement verification checklist."
+    },
+    "mcp": {
+      "classification": "PARTIALLY_VERIFIED",
+      "evidence": "services/mcp/server.py implements custom JSON-RPC tool calling, but does not adhere to official MCP stdio/SSE protocol specifications with schema discovery.",
+      "upstream_alignment": "Align with upstream rlm/mcp.py and official MCP protocol specification."
+    },
+    "memory_and_daemon": {
+      "classification": "PARTIALLY_VERIFIED",
+      "evidence": "Memory serializes to JSON, but daemon heartbeat is an idle timer without stateful goal progression.",
+      "upstream_alignment": "Implement stateful goal progression and durable resume."
+    },
+    "self_healing": {
+      "classification": "PARTIALLY_VERIFIED",
+      "evidence": "Simple AST syntax checking exists, but lacks pre-repair snapshot, targeted test execution, regression verification, and automated rollback upon failure.",
+      "upstream_alignment": "Implement strict reversible repair cycle with snapshot/rollback."
+    },
+    "speculative_and_kv": {
+      "classification": "PARTIALLY_VERIFIED",
+      "evidence": "Speculative decoding flags work and achieve 26.9 tok/s, but comparative benchmarks (baseline vs speculative, KV cache F16 vs Q8/Q4, Flash Attention ON/OFF) were never measured.",
+      "upstream_alignment": "Execute real comparative matrix across configurations."
+    }
+  }
+}

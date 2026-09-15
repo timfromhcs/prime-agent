@@ -1,0 +1,70 @@
+{
+  "primary": {
+    "name": "Qwen3-4B-Q4_K_M",
+    "repository": "unsloth/Qwen3-4B-GGUF",
+    "filename": "Qwen3-4B-Q4_K_M.gguf",
+    "path": "models/primary/Qwen3-4B-Q4_K_M.gguf",
+    "size": 2497281312,
+    "sha256": "f6f851777709861056efcdad3af01da38b31223a3ba26e61a4f8bf3a2195813a",
+    "role": "primary_reasoning",
+    "runtime": "llama.cpp",
+    "quantization": "Q4_K_M",
+    "context_length": 32768,
+    "license": "Apache-2.0",
+    "memory_estimate_mb": 2800
+  },
+  "draft": {
+    "name": "Qwen2.5-0.5B-Instruct-Q4_K_M",
+    "repository": "Qwen/Qwen2.5-0.5B-Instruct-GGUF",
+    "filename": "qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "path": "models/draft/qwen2.5-0.5b-instruct-q4_k_m.gguf",
+    "size": 491400032,
+    "sha256": "74a4da8c9fdbcd15bd1f6d01d621410d31c6fc00986f5eb687824e7b93d7a9db",
+    "role": "speculative_draft",
+    "runtime": "llama.cpp",
+    "quantization": "Q4_K_M",
+    "context_length": 32768,
+    "license": "Apache-2.0",
+    "memory_estimate_mb": 600
+  },
+  "abliterated": {
+    "name": "Qwen2.5-Coder-0.5B-Instruct-abliterated-Q4_K_M",
+    "repository": "bartowski/Qwen2.5-Coder-0.5B-Instruct-abliterated-GGUF",
+    "filename": "Qwen2.5-Coder-0.5B-Instruct-abliterated-Q4_K_M.gguf",
+    "path": "models/abliterated/Qwen2.5-Coder-0.5B-Instruct-abliterated-Q4_K_M.gguf",
+    "size": 397808416,
+    "sha256": "4ef305ffe4d769f9637df26d0e0d56cfe9f2fd8284e34e2827be496c8cd0674b",
+    "role": "abliterated_alternative",
+    "runtime": "llama.cpp",
+    "quantization": "Q4_K_M",
+    "context_length": 32768,
+    "license": "Apache-2.0",
+    "memory_estimate_mb": 550
+  },
+  "vision": {
+    "name": "Qwen2-VL-2B-Instruct-Q4_K_M",
+    "repository": "bartowski/Qwen2-VL-2B-Instruct-GGUF",
+    "filename": "Qwen2-VL-2B-Instruct-Q4_K_M.gguf",
+    "path": "models/vision/Qwen2-VL-2B-Instruct-Q4_K_M.gguf",
+    "projector_path": "models/vision/mmproj-Qwen2-VL-2B-Instruct-f16.gguf",
+    "size": 986047232,
+    "projector_size": 1331656192,
+    "sha256": "4ef095263343fc1237e8ca879790bb262bcf209f082e0a9bfce219b7ece55e8b",
+    "projector_sha256": "05cc3ae461a7b6aa4023312ccab549ecab77cf8677efee04f049fcbab55b8bc3",
+    "role": "vision_vlm",
+    "runtime": "llama.cpp",
+    "quantization": "Q4_K_M",
+    "context_length": 8192,
+    "license": "Apache-2.0",
+    "memory_estimate_mb": 2400
+  },
+  "embedding": {
+    "name": "all-MiniLM-L6-v2",
+    "repository": "sentence-transformers/all-MiniLM-L6-v2",
+    "role": "embeddings",
+    "runtime": "sentence_transformers",
+    "dimensions": 384,
+    "license": "Apache-2.0",
+    "memory_estimate_mb": 150
+  }
+}
