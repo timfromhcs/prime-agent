@@ -78,6 +78,6 @@ if (-not $SkipDoctor) {
 
 Write-Host ""
 Write-Host "INSTALL COMPLETE. Try:" -ForegroundColor Green
-Write-Host "  hcscoder                   # interactive REPL (new terminal for PATH)"
-Write-Host "  hcscoder run \"<task>\"      # one-shot task with streaming"
-Write-Host "  hcscoder --help            # all commands (prime-agent is an alias)"
+Write-Host '  hcscoder                   # interactive REPL (new terminal for PATH)'
+Write-Host '  hcscoder run "<task>"      # one-shot task with streaming'
+Write-Host '  hcscoder --help            # all commands (prime-agent is an alias)'
